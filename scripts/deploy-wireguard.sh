@@ -3,7 +3,7 @@ set -euo pipefail
 
 # WireGuard Deployment Script for NixOS Fabric
 # Usage: ./scripts/deploy-wireguard.sh <host> <public_ip_or_domain>
-# Example: ./scripts/deploy-wireguard.sh vm-sapinet 45.90.162.251
+# Example: ./scripts/deploy-wireguard.sh rtr-sapinet 45.90.162.251
 
 HOST="$1"
 PUBLIC_ENDPOINT="$2"

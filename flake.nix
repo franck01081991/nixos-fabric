@@ -1,5 +1,5 @@
 {
-  description = "Spine/leaf fabric (vm-sapinet + rtr-noisy)";
+  description = "Spine/leaf fabric (rtr-sapinet + rtr-noisy)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
@@ -13,8 +13,8 @@
           modules = [
             ./modules/ssh.nix
             ./modules/nftables.nix
-            # ./modules/roles/spine.nix
-            # ./modules/roles/leaf.nix
+            ./modules/roles/spine.nix
+            ./modules/roles/leaf.nix
 
             ./hosts/${hostname}/hardware-configuration.nix
             ./hosts/${hostname}/default.nix
@@ -23,7 +23,7 @@
     in
     {
       nixosConfigurations = {
-        "vm-sapinet" = mkHost { system = "x86_64-linux"; hostname = "vm-sapinet"; };
+        "rtr-sapinet" = mkHost { system = "x86_64-linux"; hostname = "rtr-sapinet"; };
         "rtr-noisy" = mkHost { system = "x86_64-linux"; hostname = "rtr-noisy"; };
       };
     };

@@ -2,7 +2,7 @@
 
 {
   networking = {
-    hostName = "vm-sapinet";
+    hostName = "rtr-sapinet";
     timeZone = "Europe/Paris";
     useDHCP = false;
     useNetworkd = false;
@@ -36,7 +36,7 @@
       enable = true;
       interfaceName = "wgtransport";
       listenPort = 51820;
-      privateKeyFile = "/etc/wireguard/vm-sapinet.key";
+      privateKeyFile = "/etc/wireguard/rtr-sapinet.key";
       ips = [ "10.255.0.1/24" "fd42:1337:255::1/64" ];
       
       peers = {

@@ -22,7 +22,7 @@
       ips = [ "10.255.0.11/24" ];
       
       peers = {
-        vm-sapinet = {
+        rtr-sapinet = {
           publicKey = "__SAPINET_PUB__";
           endpoint = "45.90.162.251:51820";
           allowedIPs = [ "10.255.0.1/32" "10.254.0.1/32" ];
@@ -41,7 +41,7 @@
         clusterId = "10.254.0.11";
         
         neighbors = {
-          vm-sapinet = {
+          rtr-sapinet = {
             ip = "10.254.0.1";
             as = 65000;
             updateSource = "lo";

@@ -1,14 +1,14 @@
 { config, lib, pkgs, ... }:
 
 {
-  # Leaf role configuration using the new role system
-  network-fabric.roles.leaf = {
+  # Spine role configuration using the new role system
+  network-fabric.roles.spine = {
     enable = true;
-    roleId = "leaf1";
+    roleId = "spine1";
     
-    # Override default leaf networking
+    # Override default spine networking
     networking = {
-      hostName = "rtr-noisy";
+      hostName = "rtr-sapinet";
       domain = "fabric.local";
     };
     
@@ -16,8 +16,8 @@
     wireguard = {
       interfaces = {
         wg0 = {
-          ips = [ "10.255.0.2/24" "fd42:1337:255::2/64" ];
-          privateKeyFile = "/etc/wireguard/rtr-noisy.key";
+          ips = [ "10.255.0.1/24" "fd42:1337:255::1/64" ];
+          privateKeyFile = "/etc/wireguard/rtr-sapinet.key";
         };
       };
     };

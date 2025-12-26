@@ -36,7 +36,7 @@ in {
     network-fabric = {
       roles = {
         spine = lib.mkOption {
-          type = lib.types.submodule {
+          type = lib.types.nullOr (lib.types.submodule {
             options = {
               enable = lib.mkEnableOption "Enable spine role";
               roleId = lib.mkOption {
@@ -60,16 +60,21 @@ in {
                 description = "WireGuard configuration";
               };
             };
-          };
+          });
+          default = null;
+          description = "Spine role configuration (optional)";
         };
       };
     };
   };
 
-  config = lib.mkIf (cfg.network-fabric.roles.spine or {}).enable {
-    # Apply spine role configuration
-    networking = defaultSpineNetworking.networking // (cfg.network-fabric.roles.spine or {}).networking;
-    services.frr = defaultSpineNetworking.services.frr // (cfg.network-fabric.roles.spine or {}).frr;
-    services.wireguard = defaultSpineNetworking.services.wireguard // (cfg.network-fabric.roles.spine or {}).wireguard;
-  };
+  config = lib.mkIf (cfg.network-fabric.roles.spine != null && (cfg.network-fabric.roles.spine or {}).enable) (
+    let
+      spineConfig = cfg.network-fabric.roles.spine or {};
+      spineNetworking = spineConfig.networking or {};
+    in {
+      # Only configure networking for now - services should be configured via their own modules
+      networking = defaultSpineNetworking.networking // spineNetworking;
+    }
+  );
 }

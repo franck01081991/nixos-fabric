@@ -15,7 +15,7 @@ let
     };
     
     hosts = {
-      vm-sapinet = import ./hosts/vm-sapinet;
+      rtr-sapinet = import ./hosts/rtr-sapinet;
       rtr-noisy = import ./hosts/rtr-noisy;
     };
     

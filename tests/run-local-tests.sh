@@ -71,11 +71,11 @@ un_basic_validation() {
         return 1
     fi
     
-    # Check vm-sapinet configuration
-    if nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ vm-sapinet configuration valid${NC}"
+    # Check rtr-sapinet configuration
+    if nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ rtr-sapinet configuration valid${NC}"
     else
-        echo -e "${RED}✗ vm-sapinet configuration invalid${NC}"
+        echo -e "${RED}✗ rtr-sapinet configuration invalid${NC}"
         return 1
     fi
     

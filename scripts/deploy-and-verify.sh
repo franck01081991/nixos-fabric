@@ -51,7 +51,7 @@ verify_host() {
     ip route | grep -E "(10.255|10.254)" || echo "  (No fabric routes)"
     
     # Check FRR if applicable
-    if [ "$host" = "vm-sapinet" ]; then
+    if [ "$host" = "rtr-sapinet" ]; then
         if systemctl is-active --quiet frr; then
             echo -e "${GREEN}✓ FRR service is running${NC}"
             if command -v vtysh > /dev/null 2>&1; then
@@ -80,9 +80,9 @@ verify_host() {
 while true; do
     echo
     echo -e "${YELLOW}Menu:${NC}"
-    echo "1. Deploy vm-sapinet (spine)"
+    echo "1. Deploy rtr-sapinet (spine)"
     echo "2. Deploy rtr-noisy (leaf)"
-    echo "3. Verify vm-sapinet"
+    echo "3. Verify rtr-sapinet"
     echo "4. Verify rtr-noisy"
     echo "5. Full deployment (both hosts)"
     echo "6. Full verification (both hosts)"
@@ -91,16 +91,16 @@ while true; do
     read -p "Choose an option [1-7]: " choice
     
     case $choice in
-        1) deploy_host "vm-sapinet" ;;
+        1) deploy_host "rtr-sapinet" ;;
         2) deploy_host "rtr-noisy" ;;
-        3) verify_host "vm-sapinet" ;;
+        3) verify_host "rtr-sapinet" ;;
         4) verify_host "rtr-noisy" ;;
         5)
-            deploy_host "vm-sapinet" && deploy_host "rtr-noisy"
+            deploy_host "rtr-sapinet" && deploy_host "rtr-noisy"
             echo -e "${GREEN}✓ Full deployment completed${NC}"
             ;;
         6)
-            verify_host "vm-sapinet"
+            verify_host "rtr-sapinet"
             echo
             verify_host "rtr-noisy"
             echo -e "${GREEN}✓ Full verification completed${NC}"

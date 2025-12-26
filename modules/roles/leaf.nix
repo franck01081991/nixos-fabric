@@ -36,7 +36,7 @@ in {
     network-fabric = {
       roles = {
         leaf = lib.mkOption {
-          type = lib.types.submodule {
+          type = lib.types.nullOr (lib.types.submodule {
             options = {
               enable = lib.mkEnableOption "Enable leaf role";
               roleId = lib.mkOption {
@@ -60,16 +60,21 @@ in {
                 description = "WireGuard configuration";
               };
             };
-          };
+          });
+          default = null;
+          description = "Leaf role configuration (optional)";
         };
       };
     };
   };
 
-  config = lib.mkIf (cfg.network-fabric.roles.leaf or {}).enable {
-    # Apply leaf role configuration
-    networking = defaultLeafNetworking.networking // (cfg.network-fabric.roles.leaf or {}).networking;
-    services.frr = defaultLeafNetworking.services.frr // (cfg.network-fabric.roles.leaf or {}).frr;
-    services.wireguard = defaultLeafNetworking.services.wireguard // (cfg.network-fabric.roles.leaf or {}).wireguard;
-  };
+  config = lib.mkIf (cfg.network-fabric.roles.leaf != null && (cfg.network-fabric.roles.leaf or {}).enable) (
+    let
+      leafConfig = cfg.network-fabric.roles.leaf or {};
+      leafNetworking = leafConfig.networking or {};
+    in {
+      # Only configure networking for now - services should be configured via their own modules
+      networking = defaultLeafNetworking.networking // leafNetworking;
+    }
+  );
 }
