@@ -27,7 +27,6 @@
   # Bootloader configuration (basic setup)
   boot.loader.grub = {
     enable = true;
-    version = 2;
     efiSupport = true;
     useOSProber = true;
     # Devices for GRUB installation
