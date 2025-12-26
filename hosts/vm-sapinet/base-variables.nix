@@ -23,4 +23,16 @@
   # System configuration
   system.stateVersion = "25.11";
   console.keyMap = "fr";
+  
+  # Bootloader configuration (basic setup)
+  boot.loader.grub = {
+    enable = true;
+    version = 2;
+    efiSupport = true;
+    useOSProber = true;
+  };
+  
+  # For virtual machines, you might want to disable GRUB
+  # and use the hypervisor's bootloader instead:
+  # boot.loader.grub.enable = false;
 }
