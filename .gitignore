@@ -1,0 +1,12 @@
+# Nix
+result
+*.drv
+
+# Secrets (ne jamais committer)
+secrets/
+**/*.key
+**/wireguard/*.key
+
+# Editor/OS
+.DS_Store
+*.swp
