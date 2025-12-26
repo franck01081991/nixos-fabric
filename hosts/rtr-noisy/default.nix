@@ -4,13 +4,7 @@
     ./hardware-configuration.nix
     ./base-variables.nix
     ./role-variables.nix
-    ../../modules/base.nix
-    ../../modules/networking.nix
     ../../modules/wireguard.nix
-    ../../modules/frr.nix
-    ../../modules/security.nix
-    ../../modules/roles/spine.nix
-    ../../modules/roles/leaf.nix
   ];
 
   # System tweaks

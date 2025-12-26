@@ -11,7 +11,6 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/base.nix
             ./modules/ssh.nix
             ./modules/nftables.nix
 

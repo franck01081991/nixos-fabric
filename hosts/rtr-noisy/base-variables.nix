@@ -1,30 +1,26 @@
-{ ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  network-fabric.base = {
-    enable = true;
-    
-    packages = [
-      "vim"
-      "git"
-      "tcpdump"
-      "frr"
-      "wireguard-tools"
-      "iproute2"
+  # Base system configuration
+  environment.systemPackages = with pkgs; [
+    vim
+    git
+    tcpdump
+    frr
+    wireguard-tools
+    iproute2
+  ];
+  
+  # Users configuration
+  users.users.franck = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "docker" "networking" ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN8tv95u6m802GPmgaZYVW+nE7hnuVU+3nbjYxciBGfV franck@franck-latitude3400"
     ];
-    
-    users = {
-      franck = {
-        enable = true;
-        sshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN8tv95u6m802GPmgaZYVW+nE7hnuVU+3nbjYxciBGfV franck@franck-latitude3400";
-      };
-    };
-    
-    system = {
-      stateVersion = "25.11";
-      console = {
-        keyMap = "fr";
-      };
-    };
   };
+  
+  # System configuration
+  system.stateVersion = "25.11";
+  console.keyMap = "fr";
 }
