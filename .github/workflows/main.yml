@@ -31,8 +31,8 @@ jobs:
     - name: Show available configurations
       run: nix flake show
 
-    - name: Validate vm-sapinet
-      run: nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
+    - name: Validate rtr-sapinet
+      run: nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
 
     - name: Validate rtr-noisy
       run: nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
@@ -56,10 +56,10 @@ jobs:
           substituters = https://cache.nixos.org https://cachix.org
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
-    - name: Build vm-sapinet
+    - name: Build rtr-sapinet
       run: |
-        nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
-        echo "vm-sapinet build succeeded"
+        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel --no-link
+        echo "rtr-sapinet build succeeded"
 
     - name: Build rtr-noisy
       run: |
@@ -93,22 +93,22 @@ jobs:
 
     - name: Test networking
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
         nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
 
     - name: Test bootloader
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.boot.loader.grub.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.loader.grub.enable
         nix eval .#nixosConfigurations.rtr-noisy.config.boot.loader.grub.enable
 
     - name: Test users
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.users.users.franck.isNormalUser
+        nix eval .#nixosConfigurations.rtr-sapinet.config.users.users.franck.isNormalUser
         nix eval .#nixosConfigurations.rtr-noisy.config.users.users.franck.isNormalUser
 
     - name: Test packages
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.environment.systemPackages
+        nix eval .#nixosConfigurations.rtr-sapinet.config.environment.systemPackages
         nix eval .#nixosConfigurations.rtr-noisy.config.environment.systemPackages
 
   deploy:
@@ -133,7 +133,7 @@ jobs:
 
     - name: Build for deployment
       run: |
-        nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel
+        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel
         nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel
 
     - name: Prepare artifacts
