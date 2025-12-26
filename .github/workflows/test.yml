@@ -52,6 +52,3 @@ jobs:
         nix eval .#nixosConfigurations.vm-sapinet.config.environment.systemPackages
         nix eval .#nixosConfigurations.rtr-noisy.config.environment.systemPackages
 
-    - name: Check for undefined variables
-      run: |
-        nix-instantiate --eval -E 'with import <nixpkgs> {}; builtins.trace (builtins.attrNames (import ./flake.nix).nixosConfigurations) "Configurations available"'
