@@ -24,6 +24,24 @@ This repository implements a **hybrid network fabric** where nodes can simultane
 
 ## 📖 Documentation
 
+### Individual Host Documentation
+
+Each host has comprehensive documentation:
+
+- **vm-sapinet-README.md** - Pure spine node configuration guide
+  - Configuration structure and files
+  - Usage instructions (standalone and with main repository)
+  - Update process and best practices
+  - Security recommendations
+
+- **rtr-noisy-README.md** - Hybrid node configuration guide
+  - Hybrid role configuration (spine + leaf)
+  - Dual-protocol setup (OSPF + BGP + EVPN)
+  - Configuration management
+  - Deployment workflow
+
+### Architecture and Deployment
+
 - [Deployment Guide](docs/deployment/DEPLOYMENT.md) - Step-by-step deployment
 - [Structure Reference](docs/reference/STRUCTURE.md) - Modular architecture
 - [Role System](docs/reference/ROLES.md) - Hybrid role configuration
@@ -52,6 +70,37 @@ sudo nixos-rebuild switch --flake .#rtr-noisy
 
 # Verify connectivity
 ./scripts/check-fabric.sh
+```
+
+## 🔗 Individual Git Repositories
+
+For advanced use cases, individual host configurations are available in separate repositories:
+
+### vm-sapinet (Pure Spine)
+- **Repository**: [franck01081991/vm-sapinet-config](https://github.com/franck01081991/vm-sapinet-config)
+- **Purpose**: Pure spine node configuration
+- **Content**: Complete NixOS configuration for core routing
+- **Usage**: Can be used standalone or as reference
+
+### rtr-noisy (Hybrid)
+- **Repository**: [franck01081991/rtr-noisy-config](https://github.com/franck01081991/rtr-noisy-config)
+- **Purpose**: Hybrid node configuration
+- **Content**: Dual-role (spine + leaf) NixOS configuration
+- **Usage**: Reference implementation for hybrid nodes
+
+### Using Individual Repositories
+
+```bash
+# Clone individual host configuration
+git clone https://github.com/franck01081991/vm-sapinet-config.git
+cd vm-sapinet-config
+
+# Review configuration
+cat README.md
+ls -la *.nix
+
+# Use as reference for new spine nodes
+cp -r vm-sapinet-config/ hosts/new-spine-node/
 ```
 
 ## 📦 Network Nodes
@@ -137,6 +186,8 @@ nixos-fabric/
 │       ├── spine.nix       # Spine role
 │       └── leaf.nix        # Leaf role
 ├── scripts/               # Deployment tools
+├── vm-sapinet-README.md   # vm-sapinet documentation
+├── rtr-noisy-README.md    # rtr-noisy documentation
 └── flake.nix              # Flake configuration
 ```
 
