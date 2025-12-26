@@ -4,7 +4,6 @@
     ./hardware-configuration.nix
     ./base-variables.nix
     ./role-variables.nix
-    ../../modules/wireguard.nix
   ];
 
   # System tweaks
