@@ -27,30 +27,30 @@ jobs:
           substituters = https://cache.nixos.org https://cachix.org
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
-    - name: Test WireGuard configuration
+    - name: Test networking configuration
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.network-fabric.wireguard
-        nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.wireguard
+        nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
+        nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
 
-    - name: Test FRR configuration
+    - name: Test bootloader configuration
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.network-fabric.frr
-        nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.frr
+        nix eval .#nixosConfigurations.vm-sapinet.config.boot.loader.grub.enable
+        nix eval .#nixosConfigurations.rtr-noisy.config.boot.loader.grub.enable
 
     - name: Test networking configuration
       run: |
         nix eval .#nixosConfigurations.vm-sapinet.config.networking.interfaces
         nix eval .#nixosConfigurations.rtr-noisy.config.networking.interfaces
 
-    - name: Test SSH configuration
+    - name: Test users configuration
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.services.openssh
-        nix eval .#nixosConfigurations.rtr-noisy.config.services.openssh
+        nix eval .#nixosConfigurations.vm-sapinet.config.users.users.franck.isNormalUser
+        nix eval .#nixosConfigurations.rtr-noisy.config.users.users.franck.isNormalUser
 
-    - name: Test firewall configuration
+    - name: Test system packages
       run: |
-        nix eval .#nixosConfigurations.vm-sapinet.config.networking.firewall
-        nix eval .#nixosConfigurations.rtr-noisy.config.networking.firewall
+        nix eval .#nixosConfigurations.vm-sapinet.config.environment.systemPackages
+        nix eval .#nixosConfigurations.rtr-noisy.config.environment.systemPackages
 
     - name: Check for undefined variables
       run: |
