@@ -46,13 +46,13 @@ in {
 
     # Firewall rules for WireGuard
     networking.nftables.ruleset = lib.concatStringsSep "\n" [
-      cfg.firewall.enable then ''
+      (if cfg.firewall.enable then ''
         table inet filter {
           chain input {
             udp dport ${toString cfg.listenPort} accept
           }
         }
-      '' else ""
+      '' else "")
     ];
   };
 }

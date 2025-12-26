@@ -68,13 +68,7 @@ in {
       interface = cfg.defaultGateway.interface;
     };
     
-    # Loopback interface
-    networking.interfaces.lo = lib.mkIf cfg.loopback.enable {
-      ipv4.addresses = cfg.loopback.ipv4;
-      ipv6.addresses = cfg.loopback.ipv6;
-    };
-    
-    # Additional interfaces
+    # Additional interfaces (includes loopback)
     networking.interfaces = generateInterfaces cfg.interfaces;
     
     # System tweaks for networking

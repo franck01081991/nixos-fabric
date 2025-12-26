@@ -87,7 +87,7 @@ in {
             ''
             address-family ${af}
               ${lib.concatStringsSep "\n" (lib.map (network: "network ${network}") cfg.bgp.networks)}
-              ${generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies and elem af neighbor.addressFamilies) cfg.bgp.neighbors)}
+              ${generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors)}
             exit-address-family
             ''
           ) cfg.bgp.addressFamilies)}
