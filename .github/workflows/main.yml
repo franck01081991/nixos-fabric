@@ -142,7 +142,7 @@ jobs:
         cp -r result* deploy/
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nixos-configurations
         path: deploy/
