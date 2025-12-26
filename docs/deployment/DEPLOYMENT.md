@@ -11,9 +11,6 @@ This guide provides step-by-step instructions for deploying the NixOS fabric inf
 4. WireGuard kernel module available
 
 ### Repository Setup
-
-**Note:** The default branch is `master`.
-
 ```bash
 git clone git@github.com:franck01081991/nixos-fabric.git
 cd nixos-fabric
