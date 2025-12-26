@@ -9,6 +9,7 @@
     ../../modules/wireguard.nix
     ../../modules/frr.nix
     ../../modules/security.nix
+    ../../modules/roles/spine.nix
     ../../modules/roles/leaf.nix
   ];
 
