@@ -84,7 +84,11 @@ The pipeline consists of 4 main workflows:
 
 ### Prerequisites
 
-1. **GitHub Secrets** (optional but recommended):
+1. **Nix Version**: Nix 2.18.0 or higher is required
+   - Check your version: `nix --version`
+   - Upgrade if needed: `nix upgrade-nix`
+
+2. **GitHub Secrets** (optional but recommended):
    - `CACHIX_AUTH_TOKEN`: For Cachix caching
    - `SSH_PRIVATE_KEY`: For deployment (if automated)
 
@@ -229,6 +233,19 @@ Set up notifications in GitHub:
 ## 🔧 Troubleshooting
 
 ### Common Issues
+
+**Issue**: "Nix version too old" error
+**Solution**: Upgrade Nix to 2.18.0 or higher:
+```bash
+# Check current version
+nix --version
+
+# Upgrade Nix
+nix upgrade-nix
+
+# Or reinstall
+curl -L https://nixos.org/nix/install | sh
+```
 
 **Issue**: Workflow fails on "Install Nix"
 **Solution**: Check GitHub Actions runner availability

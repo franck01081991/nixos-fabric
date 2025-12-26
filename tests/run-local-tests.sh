@@ -5,6 +5,26 @@
 
 set -euo pipefail
 
+# Check Nix version
+check_nix_version() {
+    local required_version="2.18.0"
+    local current_version=$(nix --version | cut -d' ' -f3)
+    
+    if [ "$(printf '%s\n' "$required_version" "$current_version" | sort -V | head -n1)" != "$required_version" ]; then
+        echo "❌ Nix version $current_version is too old. Required: $required_version+"
+        echo "📋 Please upgrade Nix:"
+        echo "   nix upgrade-nix"
+        echo "   or"
+        echo "   curl -L https://nixos.org/nix/install | sh"
+        exit 1
+    else
+        echo "✅ Nix version $current_version is compatible"
+    fi
+}
+
+# Run version check
+check_nix_version
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,7 +36,8 @@ NC='\033[0m' # No Color
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${TEST_DIR}/.."
 
-# Function to run Nix testsun_nix_tests() {
+# Function to run Nix tests
+un_nix_tests() {
     echo -e "${BLUE}Running Nix tests...${NC}"
     
     # Run the test runner
@@ -38,7 +59,8 @@ PROJECT_ROOT="${TEST_DIR}/.."
     fi
 }
 
-# Function to run basic validationun_basic_validation() {
+# Function to run basic validation
+un_basic_validation() {
     echo -e "${BLUE}Running basic validation...${NC}"
     
     # Check flake validity
@@ -68,7 +90,8 @@ PROJECT_ROOT="${TEST_DIR}/.."
     return 0
 }
 
-# Function to run syntax checksun_syntax_checks() {
+# Function to run syntax checks
+un_syntax_checks() {
     echo -e "${BLUE}Running syntax checks...${NC}"
     
     local failed=0
