@@ -95,6 +95,12 @@ The `.gitmodules` file contains the configuration for external repositories.
 
 For advanced use cases, individual host configurations are available in separate repositories:
 
+📚 **New! Organized documentation is available in [docs/](docs/):**
+- [Architecture Overview](docs/architecture/OVERVIEW.md)
+- [Quick Start Guide](docs/architecture/QUICKSTART.md)
+- [Role System](docs/reference/ROLES.md)
+- [Synchronization Strategy](docs/development/SYNC_STRATEGY.md)
+
 ### rtr-sapinet (Pure Spine)
 - **Repository**: [franck01081991/rtr-sapinet-config](https://github.com/franck01081991/rtr-sapinet-config)
 - **Purpose**: Pure spine node configuration

@@ -1,168 +1,131 @@
-# NixOS Fabric
+# NixOS Fabric Documentation
 
-Repository for managing NixOS hosts via flakes.
+Welcome to the NixOS Fabric documentation! This guide will help you understand, use, and contribute to the spine/leaf fabric network system.
 
-## Hosts
-- `vm-sapinet`
-- `rtr-noisy`
+## 📚 Documentation Structure
 
-## Structure
-- `flake.nix`: Main flake configuration
-- `modules/`: Shared NixOS modules
-- `hosts/<host>/`: Per-host configuration
-- `secrets/`: **NEVER COMMIT SECRETS** (use `/etc/nixos/secrets/` on hosts)
+```
+docs/
+├── architecture/      # System architecture and design
+├── development/       # Development workflows and tools
+├── deployment/        # Deployment procedures and guides
+├── reference/         # Technical reference and API
+├── troubleshooting/   # Common issues and solutions
+└── README.md          # This file
+```
 
-## Privacy Policy
-- This repository **MUST remain PRIVATE**
-- **NEVER** commit secrets (WireGuard keys, passwords, etc.)
-- WireGuard keys should be stored in `/etc/wireguard/` on hosts
-- Use `secrets/` directory for sensitive files (but keep it out of git)
+## 🚀 Getting Started
 
-## Secrets Management
+### Quick Start Guide
 
-### WireGuard Keys
-1. On each host, generate private key:
+1. **Clone the repository** (with submodules):
    ```bash
-   wg genkey | sudo tee /etc/wireguard/${HOSTNAME}.key
-   sudo chmod 600 /etc/wireguard/${HOSTNAME}.key
+   git clone --recurse-submodules https://github.com/franck01081991/nixos-fabric.git
+   cd nixos-fabric
    ```
 
-2. Extract public key for peers:
+2. **Validate the configuration**:
    ```bash
-   sudo cat /etc/wireguard/${HOSTNAME}.key | wg pubkey
+   nix flake check
    ```
 
-3. Store public keys and endpoints in `/etc/nixos/secrets/wireguard.nix`:
-   ```nix
-   { 
-     # For vm-sapinet (spine)
-     rtr-noisyPub = "BASE64_PUBLIC_KEY";
-     rtr-noisyEndpoint = "IP_OR_DOMAIN";
-     bondyPub = "BASE64_PUBLIC_KEY";
-     bondyEndpoint = "IP_OR_DOMAIN";
-     leprePub = "BASE64_PUBLIC_KEY";
-     lepreEndpoint = "IP_OR_DOMAIN";
-
-     # For rtr-noisy (leaf)
-     vm-sapinetPub = "BASE64_PUBLIC_KEY";
-   }
-   ```
-
-### Deployment Workflow
-1. Build config:
+3. **Build a configuration**:
    ```bash
-   sudo nixos-rebuild switch --flake .#rtr-noisy
+   nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel
    ```
 
-2. For remote deployment:
+4. **Deploy to a machine**:
    ```bash
-   nixos-rebuild switch --flake .#rtr-noisy --target-host root@rtr-noisy --build-host localhost
+   sudo nixos-rebuild switch --flake .#rtr-sapinet
    ```
 
-**Note**: With the new modular structure, most configuration is now in `hosts/<hostname>/variables.nix` rather than directly in `default.nix`. See the [Structure Reference](reference/STRUCTURE.md) for details.
+## 📖 Documentation Guide
 
-## Hardware Configuration
-Replace `hosts/<host>/hardware-configuration.nix` with content from `/etc/nixos/hardware-configuration.nix` on each host.
+### For New Users
 
-## Deployment Guide
+Start with these documents:
 
-### Quick Start
+1. **[Architecture Overview](architecture/OVERVIEW.md)** - Understand the system design
+2. **[Quick Start Guide](architecture/QUICKSTART.md)** - Get up and running quickly
+3. **[Role System](reference/ROLES.md)** - Learn about spine/leaf roles
+4. **[Development Workflow](development/WORKFLOW.md)** - Understand how to work with the codebase
 
-**Note:** The default branch is `master` (not `main`).
+### For Developers
 
-```bash
-# Build a host configuration
-nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel
+Development-specific documentation:
 
-# Check hostname
-nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
-```
+1. **[Development Environment](development/ENVIRONMENT.md)** - Set up your dev environment
+2. **[Synchronization Strategy](development/SYNC_STRATEGY.md)** - Understand the bidirectional sync system
+3. **[Adding New Nodes](development/ADDING_NODES.md)** - Add new hosts to the fabric
+4. **[Testing Guide](development/TESTING.md)** - Run and write tests
 
-### Full Deployment Process
+### For Operators
 
-#### 1. Generate WireGuard Keys
-On each host, run the deployment script:
-```bash
-# On vm-sapinet
-./scripts/deploy-wireguard.sh vm-sapinet 45.90.162.251
+Deployment and operations:
 
-# On rtr-noisy
-./scripts/deploy-wireguard.sh rtr-noisy NOISY_PUBLIC_IP
-```
+1. **[Deployment Guide](deployment/DEPLOYMENT.md)** - Deploy the fabric
+2. **[Upgrade Process](deployment/UPGRADE.md)** - Upgrade existing deployments
+3. **[Monitoring](deployment/MONITORING.md)** - Monitor the fabric
+4. **[Backup and Restore](deployment/BACKUP.md)** - Backup strategies
 
-#### 2. Exchange Public Keys
-Copy the public keys from each host's `/etc/nixos/secrets/wireguard.nix` to the other hosts.
+### Technical Reference
 
-#### 3. Update Configuration
-Edit the WireGuard configuration in `hosts/<host>/default.nix` to replace:
-- `__SAPINET_PUB__` with the actual public key from vm-sapinet
-- `__NOISY_PUB__` with the actual public key from rtr-noisy
-- `__NOISY_ENDPOINT__` with the actual public IP/domain
+Detailed technical documentation:
 
-#### 4. Deploy Configuration
-```bash
-# On vm-sapinet
-sudo nixos-rebuild switch --flake .#vm-sapinet
-
-# On rtr-noisy
-sudo nixos-rebuild switch --flake .#rtr-noisy
-```
-
-#### 5. Verify Connectivity
-```bash
-# Check WireGuard interface
-ip link show wgtransport
-
-# Check WireGuard status
-sudo wg show
-
-# Check BGP sessions (on vm-sapinet)
-vtysh -c "show ip bgp summary"
-
-# Check OSPF neighbors (on vm-sapinet)
-vtysh -c "show ip ospf neighbor"
-
-# Ping over WireGuard
-ping 10.255.0.2  # From vm-sapinet to rtr-noisy
-```
-
-### Remote Deployment
-```bash
-# Build locally and deploy to remote host
-nixos-rebuild switch --flake .#rtr-noisy --target-host root@rtr-noisy --build-host localhost
-```
+1. **[Configuration Reference](reference/CONFIGURATION.md)** - All configuration options
+2. **[Module Reference](reference/MODULES.md)** - Available NixOS modules
+3. **[Role Reference](reference/ROLES.md)** - Spine and leaf roles
+4. **[API Reference](reference/API.md)** - Programmatic interfaces
 
 ### Troubleshooting
 
-**WireGuard issues:**
-```bash
-# Check WireGuard status
-sudo wg show
+Common issues and solutions:
 
-# Check interface
-ip addr show wgtransport
+1. **[Common Issues](troubleshooting/COMMON.md)** - Frequent problems
+2. **[Debugging Guide](troubleshooting/DEBUGGING.md)** - Debugging techniques
+3. **[Error Reference](troubleshooting/ERRORS.md)** - Error messages
+4. **[FAQ](troubleshooting/FAQ.md)** - Frequently asked questions
 
-# Check routes
-ip route
+## 📦 Project Structure
+
+```
+nixos-fabric/
+├── docs/                  # Documentation (you are here)
+├── external/              # External submodules
+│   ├── rtr-sapinet-config/
+│   └── rtr-noisy-config/
+├── hosts/                 # Host configurations
+│   ├── rtr-sapinet/
+│   └── rtr-noisy/
+├── modules/               # NixOS modules
+│   ├── roles/
+│   │   ├── spine.nix
+│   │   └── leaf.nix
+│   ├── frr.nix
+│   ├── networking.nix
+│   └── ...
+├── scripts/               # Automation scripts
+│   ├── deploy-and-verify.sh
+│   ├── setup-submodules.sh
+│   └── sync-bidirectional.sh
+├── .github/               # GitHub configuration
+│   └── workflows/
+│       └── main.yml       # CI/CD pipeline
+├── flake.nix              # Nix flake configuration
+└── README.md              # Project README
 ```
 
-**BGP/OSPF issues:**
-```bash
-# Check FRR status
-sudo systemctl status frr
+## 🤝 Contributing
 
-# Check BGP sessions
-vtysh -c "show ip bgp summary"
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
-# Check OSPF neighbors
-vtysh -c "show ip ospf neighbor"
-```
+## 📞 Support
 
-**Firewall issues:**
-```bash
-# Check nftables rules
-sudo nft list ruleset
+For questions and support:
+- Open an issue on GitHub
+- Check the [FAQ](troubleshooting/FAQ.md)
+- Review the [troubleshooting guides](troubleshooting/)
 
-# Check dropped packets
-sudo dmesg | grep nft
-```
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
