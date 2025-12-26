@@ -32,10 +32,14 @@ jobs:
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
     - name: Build vm-sapinet configuration
-      run: nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
+      run: |
+        nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
+        echo "vm-sapinet build succeeded"
 
     - name: Build rtr-noisy configuration
-      run: nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+      run: |
+        nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+        echo "rtr-noisy build succeeded"
 
     - name: Cache build results
       uses: actions/cache@v3
@@ -46,4 +50,7 @@ jobs:
           ${{ runner.os }}-nix-
 
     - name: List build results
-      run: ls -lah result*
+      run: ls -lah result* || echo "No result link created (expected with --no-link)"
+
+    - name: Verify build success
+      run: echo "✅ All builds completed successfully"
