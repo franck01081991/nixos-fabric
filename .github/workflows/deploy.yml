@@ -37,7 +37,6 @@ jobs:
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@main
       with:
-        installer-url: https://github.com/DeterminateSystems/nix-installer/releases/latest/download/nix-installer-x86_64-linux
         extra-conf: |
           experimental-features = nix-command flakes
           substituters = https://cache.nixos.org https://cachix.org
