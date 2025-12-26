@@ -12,7 +12,7 @@ This repository implements a **hybrid network fabric** where nodes can simultane
 ┌───────────────────────────────────────────────────────┐
 │                   Hybrid Fabric Network                │
 ├───────────────────┬───────────────────┬───────────────┤
-│   vm-sapinet      │    rtr-noisy      │   (future)     │
+│   rtr-sapinet     │    rtr-noisy      │   (future)     │
 │  (Pure Spine)     │  (Hybrid Node)    │   nodes        │
 ├───────────────────┼───────────────────┼───────────────┤
 │ - OSPF + BGP      │ - OSPF + BGP      │ - Spine/Leaf   │
@@ -28,7 +28,7 @@ This repository implements a **hybrid network fabric** where nodes can simultane
 
 Each host has comprehensive documentation:
 
-- **vm-sapinet-README.md** - Pure spine node configuration guide
+- **rtr-sapinet-README.md** - Pure spine node configuration guide
   - Configuration structure and files
   - Usage instructions (standalone and with main repository)
   - Update process and best practices
@@ -57,15 +57,15 @@ cd nixos-fabric
 
 # Build and evaluate configurations
 nix flake show
-nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
+nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
 nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.roles
 
 # Generate WireGuard keys
-./scripts/deploy-wireguard.sh vm-sapinet 45.90.162.251
+./scripts/deploy-wireguard.sh rtr-sapinet 45.90.162.251
 ./scripts/deploy-wireguard.sh rtr-noisy RTR_NOISY_IP
 
 # Deploy configurations
-sudo nixos-rebuild switch --flake .#vm-sapinet
+sudo nixos-rebuild switch --flake .#rtr-sapinet
 sudo nixos-rebuild switch --flake .#rtr-noisy
 
 # Verify connectivity
@@ -76,8 +76,8 @@ sudo nixos-rebuild switch --flake .#rtr-noisy
 
 For advanced use cases, individual host configurations are available in separate repositories:
 
-### vm-sapinet (Pure Spine)
-- **Repository**: [franck01081991/vm-sapinet-config](https://github.com/franck01081991/vm-sapinet-config)
+### rtr-sapinet (Pure Spine)
+- **Repository**: [franck01081991/rtr-sapinet-config](https://github.com/franck01081991/rtr-sapinet-config)
 - **Purpose**: Pure spine node configuration
 - **Content**: Complete NixOS configuration for core routing
 - **Usage**: Can be used standalone or as reference
@@ -92,20 +92,20 @@ For advanced use cases, individual host configurations are available in separate
 
 ```bash
 # Clone individual host configuration
-git clone https://github.com/franck01081991/vm-sapinet-config.git
-cd vm-sapinet-config
+git clone https://github.com/franck01081991/rtr-sapinet-config.git
+cd rtr-sapinet-config
 
 # Review configuration
 cat README.md
 ls -la *.nix
 
 # Use as reference for new spine nodes
-cp -r vm-sapinet-config/ hosts/new-spine-node/
+cp -r rtr-sapinet-config/ hosts/new-spine-node/
 ```
 
 ## 📦 Network Nodes
 
-### vm-sapinet (Pure Spine)
+### rtr-sapinet (Pure Spine)
 
 | Role | Configuration |
 |------|---------------|
@@ -166,7 +166,7 @@ nixos-fabric/
 │   ├── reference/         # Architecture & examples
 │   └── troubleshooting/   # Issue resolution
 ├── hosts/                 # Host configurations
-│   ├── vm-sapinet/        # Pure spine node
+│   ├── rtr-sapinet/       # Pure spine node
 │   │   ├── hardware-configuration.nix
 │   │   ├── base-variables.nix
 │   │   ├── role-variables.nix  # spine role only
@@ -186,7 +186,7 @@ nixos-fabric/
 │       ├── spine.nix       # Spine role
 │       └── leaf.nix        # Leaf role
 ├── scripts/               # Deployment tools
-├── vm-sapinet-README.md   # vm-sapinet documentation
+├── rtr-sapinet-README.md  # rtr-sapinet documentation
 ├── rtr-noisy-README.md    # rtr-noisy documentation
 └── flake.nix              # Flake configuration
 ```
@@ -194,7 +194,7 @@ nixos-fabric/
 ## 🔧 Key Features
 
 ### Hybrid Role System
-- **Pure Spine** (vm-sapinet): Core routing only
+- **Pure Spine** (rtr-sapinet): Core routing only
 - **Hybrid Node** (rtr-noisy): Core + Edge routing
 - **Pure Leaf**: Edge routing only (template available)
 
@@ -250,7 +250,7 @@ nix eval .#nixosConfigurations.rtr-noisy.config.networking.wireguard.interfaces.
 
 ```bash
 # Test WireGuard connectivity
-ping 10.255.0.1    # vm-sapinet
+ping 10.255.0.1    # rtr-sapinet
 ping 10.255.0.11   # rtr-noisy
 
 # Test BGP sessions
