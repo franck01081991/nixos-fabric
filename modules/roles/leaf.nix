@@ -66,10 +66,10 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.network-fabric.roles.leaf.enable {
+  config = lib.mkIf (cfg.network-fabric.roles.leaf or {}).enable {
     # Apply leaf role configuration
-    networking = defaultLeafNetworking.networking // cfg.network-fabric.roles.leaf.networking;
-    services.frr = defaultLeafNetworking.services.frr // cfg.network-fabric.roles.leaf.frr;
-    services.wireguard = defaultLeafNetworking.services.wireguard // cfg.network-fabric.roles.leaf.wireguard;
+    networking = defaultLeafNetworking.networking // (cfg.network-fabric.roles.leaf or {}).networking;
+    services.frr = defaultLeafNetworking.services.frr // (cfg.network-fabric.roles.leaf or {}).frr;
+    services.wireguard = defaultLeafNetworking.services.wireguard // (cfg.network-fabric.roles.leaf or {}).wireguard;
   };
 }

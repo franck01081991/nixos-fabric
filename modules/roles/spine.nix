@@ -66,10 +66,10 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.network-fabric.roles.spine.enable {
+  config = lib.mkIf (cfg.network-fabric.roles.spine or {}).enable {
     # Apply spine role configuration
-    networking = defaultSpineNetworking.networking // cfg.network-fabric.roles.spine.networking;
-    services.frr = defaultSpineNetworking.services.frr // cfg.network-fabric.roles.spine.frr;
-    services.wireguard = defaultSpineNetworking.services.wireguard // cfg.network-fabric.roles.spine.wireguard;
+    networking = defaultSpineNetworking.networking // (cfg.network-fabric.roles.spine or {}).networking;
+    services.frr = defaultSpineNetworking.services.frr // (cfg.network-fabric.roles.spine or {}).frr;
+    services.wireguard = defaultSpineNetworking.services.wireguard // (cfg.network-fabric.roles.spine or {}).wireguard;
   };
 }
