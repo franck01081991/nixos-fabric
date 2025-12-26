@@ -1,166 +1,82 @@
-# NixOS Fabric
+# NixOS Fabric Infrastructure
 
-Repository for managing NixOS hosts via flakes.
+**Private Repository** - Network automation for spine/leaf architecture with WireGuard, BGP, OSPF, and EVPN/VXLAN.
 
-## Hosts
-- `sapinet`
-- `noisy-edge1`
+## 📖 Documentation
 
-## Structure
-- `flake.nix`: Main flake configuration
-- `modules/`: Shared NixOS modules
-- `hosts/<host>/`: Per-host configuration
-- `secrets/`: **NEVER COMMIT SECRETS** (use `/etc/nixos/secrets/` on hosts)
+- [Deployment Guide](docs/deployment/DEPLOYMENT.md) - Step-by-step deployment instructions
+- [Troubleshooting](docs/troubleshooting/) - Common issues and solutions
+- [Reference](docs/reference/) - Configuration reference
 
-## Privacy Policy
-- This repository **MUST remain PRIVATE**
-- **NEVER** commit secrets (WireGuard keys, passwords, etc.)
-- WireGuard keys should be stored in `/etc/wireguard/` on hosts
-- Use `secrets/` directory for sensitive files (but keep it out of git)
-
-## Secrets Management
-
-### WireGuard Keys
-1. On each host, generate private key:
-   ```bash
-   wg genkey | sudo tee /etc/wireguard/${HOSTNAME}.key
-   sudo chmod 600 /etc/wireguard/${HOSTNAME}.key
-   ```
-
-2. Extract public key for peers:
-   ```bash
-   sudo cat /etc/wireguard/${HOSTNAME}.key | wg pubkey
-   ```
-
-3. Store public keys and endpoints in `/etc/nixos/secrets/wireguard.nix`:
-   ```nix
-   { 
-     # For sapinet
-     noisyPub = "BASE64_PUBLIC_KEY";
-     noisyEndpoint = "IP_OR_DOMAIN";
-     bondyPub = "BASE64_PUBLIC_KEY";
-     bondyEndpoint = "IP_OR_DOMAIN";
-     leprePub = "BASE64_PUBLIC_KEY";
-     lepreEndpoint = "IP_OR_DOMAIN";
-
-     # For noisy-edge1
-     sapinetPub = "BASE64_PUBLIC_KEY";
-   }
-   ```
-
-### Deployment Workflow
-1. Build config:
-   ```bash
-   sudo nixos-rebuild switch --flake .#noisy-edge1
-   ```
-
-2. For remote deployment:
-   ```bash
-   nixos-rebuild switch --flake .#noisy-edge1 --target-host root@noisy-edge1 --build-host localhost
-   ```
-
-## Hardware Configuration
-Replace `hosts/<host>/hardware-configuration.nix` with content from `/etc/nixos/hardware-configuration.nix` on each host.
-
-## Deployment Guide
-
-### Quick Start
-
-**Note:** The default branch is `master` (not `main`).
+## 🚀 Quick Start
 
 ```bash
-# Build a host configuration
-nix build .#nixosConfigurations.sapinet.config.system.build.toplevel
+# Clone the repository (master branch)
+git clone git@github.com:franck01081991/nixos-fabric.git
+cd nixos-fabric
 
-# Check hostname
-nix eval .#nixosConfigurations.sapinet.config.networking.hostName
+# Build and evaluate configurations
+nix flake show
+nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
+nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
 ```
 
-### Full Deployment Process
+## 📦 Hosts
 
-#### 1. Generate WireGuard Keys
-On each host, run the deployment script:
+| Host | Role | Configuration |
+|------|------|---------------|
+| **vm-sapinet** | Spine Router | WireGuard, OSPF, BGP, Security Hardening |
+| **rtr-noisy** | Leaf Router | WireGuard, BGP, EVPN/VXLAN |
+
+## 🔒 Security
+
+⚠️ **IMPORTANT**: This repository MUST remain PRIVATE
+
+- **No secrets in git** - WireGuard keys stored in `/etc/wireguard/` on hosts
+- **Secrets management** - Use `/etc/nixos/secrets/` (not committed)
+- **Public keys** - Shared securely between hosts
+
+## 🛠️ Deployment
+
 ```bash
-# On sapinet
-./scripts/deploy-wireguard.sh sapinet 45.90.162.251
+# Generate WireGuard keys
+./scripts/deploy-wireguard.sh vm-sapinet 45.90.162.251
+./scripts/deploy-wireguard.sh rtr-noisy RTR_NOISY_IP
 
-# On noisy-edge1
-./scripts/deploy-wireguard.sh noisy-edge1 NOISY_PUBLIC_IP
+# Deploy configurations
+sudo nixos-rebuild switch --flake .#vm-sapinet
+sudo nixos-rebuild switch --flake .#rtr-noisy
+
+# Verify connectivity
+./scripts/check-fabric.sh
 ```
 
-#### 2. Exchange Public Keys
-Copy the public keys from each host's `/etc/nixos/secrets/wireguard.nix` to the other hosts.
+## 📂 Structure
 
-#### 3. Update Configuration
-Edit the WireGuard configuration in `hosts/<host>/default.nix` to replace:
-- `__SAPINET_PUB__` with the actual public key from sapinet
-- `__NOISY_PUB__` with the actual public key from noisy-edge1
-- `__NOISY_ENDPOINT__` with the actual public IP/domain
-
-#### 4. Deploy Configuration
-```bash
-# On sapinet
-sudo nixos-rebuild switch --flake .#sapinet
-
-# On noisy-edge1
-sudo nixos-rebuild switch --flake .#noisy-edge1
+```
+nixos-fabric/
+├── docs/                  # Documentation
+│   ├── deployment/        # Deployment guides
+│   ├── troubleshooting/   # Issue resolution
+│   └── reference/         # Configuration reference
+├── hosts/                 # Host configurations
+│   ├── vm-sapinet/        # Spine router
+│   └── rtr-noisy/         # Leaf router
+├── modules/               # Shared NixOS modules
+├── scripts/               # Deployment tools
+└── flake.nix              # Flake configuration
 ```
 
-#### 5. Verify Connectivity
-```bash
-# Check WireGuard interface
-ip link show wgtransport
+## 🔧 Tools
 
-# Check WireGuard status
-sudo wg show
+- `scripts/deploy-wireguard.sh` - Generate WireGuard keys
+- `scripts/check-fabric.sh` - Verify fabric connectivity
+- `scripts/deploy-and-verify.sh` - Interactive deployment tool
 
-# Check BGP sessions (on sapinet)
-vtysh -c "show ip bgp summary"
+## 📞 Support
 
-# Check OSPF neighbors (on sapinet)
-vtysh -c "show ip ospf neighbor"
-
-# Ping over WireGuard
-ping 10.255.0.2  # From sapinet to noisy-edge1
-```
-
-### Remote Deployment
-```bash
-# Build locally and deploy to remote host
-nixos-rebuild switch --flake .#noisy-edge1 --target-host root@noisy-edge1 --build-host localhost
-```
-
-### Troubleshooting
-
-**WireGuard issues:**
-```bash
-# Check WireGuard status
-sudo wg show
-
-# Check interface
-ip addr show wgtransport
-
-# Check routes
-ip route
-```
-
-**BGP/OSPF issues:**
-```bash
-# Check FRR status
-sudo systemctl status frr
-
-# Check BGP sessions
-vtysh -c "show ip bgp summary"
-
-# Check OSPF neighbors
-vtysh -c "show ip ospf neighbor"
-```
-
-**Firewall issues:**
-```bash
-# Check nftables rules
-sudo nft list ruleset
-
-# Check dropped packets
-sudo dmesg | grep nft
-```
+For issues, check:
+- System logs: `journalctl -f`
+- WireGuard: `sudo wg show`
+- BGP: `vtysh -c "show ip bgp summary"`
+- OSPF: `vtysh -c "show ip ospf neighbor"`

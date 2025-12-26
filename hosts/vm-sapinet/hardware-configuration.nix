@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  # Hardware-specific configuration for sapinet (VPS)
+  # Hardware-specific configuration for vm-sapinet (VPS)
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 

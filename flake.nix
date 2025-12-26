@@ -1,5 +1,5 @@
 {
-  description = "Spine/leaf fabric (sapinet + noisy-edge1)";
+  description = "Spine/leaf fabric (vm-sapinet + rtr-noisy)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
@@ -22,8 +22,8 @@
     in
     {
       nixosConfigurations = {
-        sapinet = mkHost { system = "x86_64-linux"; hostname = "sapinet"; };
-        noisy-edge1 = mkHost { system = "x86_64-linux"; hostname = "noisy-edge1"; };
+        "vm-sapinet" = mkHost { system = "x86_64-linux"; hostname = "vm-sapinet"; };
+        "rtr-noisy" = mkHost { system = "x86_64-linux"; hostname = "rtr-noisy"; };
       };
     };
 }

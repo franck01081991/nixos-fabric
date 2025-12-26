@@ -3,7 +3,7 @@
   imports = [ ./hardware-configuration.nix ];
 
   # Host identity
-  networking.hostName = "sapinet";
+  networking.hostName = "vm-sapinet";
   time.timeZone = "Europe/Paris";
 
   # Nix settings
@@ -30,7 +30,7 @@
       "fd42:1337:255::1/64"
     ];
     listenPort = 51820;
-    privateKeyFile = "/etc/wireguard/sapinet.key";
+    privateKeyFile = "/etc/wireguard/vm-sapinet.key";
 
     peers = [
       {
@@ -207,7 +207,7 @@
 
     config = ''
       frr defaults traditional
-      hostname sapinet
+      hostname vm-sapinet
       service integrated-vtysh-config
       log syslog informational
 

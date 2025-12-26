@@ -23,46 +23,46 @@ cd nixos-fabric
 
 ### 1. Generate WireGuard Keys
 
-**On sapinet:**
+**On vm-sapinet (spine):**
 ```bash
-./scripts/deploy-wireguard.sh sapinet 45.90.162.251
+./scripts/deploy-wireguard.sh vm-sapinet 45.90.162.251
 ```
 
-**On noisy-edge1:**
+**On rtr-noisy (leaf):**
 ```bash
-./scripts/deploy-wireguard.sh noisy-edge1 NOISY_PUBLIC_IP
+./scripts/deploy-wireguard.sh rtr-noisy RTR_NOISY_PUBLIC_IP
 ```
 
 ### 2. Exchange Public Keys
 
 After generating keys on each host:
 
-1. Copy `/etc/nixos/secrets/wireguard.nix` from sapinet to noisy-edge1
-2. Copy `/etc/nixos/secrets/wireguard.nix` from noisy-edge1 to sapinet
+1. Copy `/etc/nixos/secrets/wireguard.nix` from vm-sapinet to rtr-noisy
+2. Copy `/etc/nixos/secrets/wireguard.nix` from rtr-noisy to vm-sapinet
 
 ### 3. Update Configurations
 
-**On sapinet:**
-Edit `hosts/sapinet/default.nix` and replace:
-- `__NOISY_PUB__` with noisy-edge1's public key
-- `__NOISY_ENDPOINT__` with noisy-edge1's public IP
+**On vm-sapinet (spine):**
+Edit `hosts/vm-sapinet/default.nix` and replace:
+- `__NOISY_PUB__` with rtr-noisy's public key
+- `__NOISY_ENDPOINT__` with rtr-noisy's public IP
 
-**On noisy-edge1:**
-Edit `hosts/noisy-edge1/default.nix` and replace:
-- `__SAPINET_PUB__` with sapinet's public key
+**On rtr-noisy (leaf):**
+Edit `hosts/rtr-noisy/default.nix` and replace:
+- `__SAPINET_PUB__` with vm-sapinet's public key
 
 ### 4. Deploy Configurations
 
 **Option A: Manual Deployment**
 
-On sapinet:
+On vm-sapinet (spine):
 ```bash
-sudo nixos-rebuild switch --flake .#sapinet
+sudo nixos-rebuild switch --flake .#vm-sapinet
 ```
 
-On noisy-edge1:
+On rtr-noisy (leaf):
 ```bash
-sudo nixos-rebuild switch --flake .#noisy-edge1
+sudo nixos-rebuild switch --flake .#rtr-noisy
 ```
 
 **Option B: Using Deployment Script**
@@ -87,20 +87,20 @@ sudo wg show
 ip addr show wgtransport
 ```
 
-Check BGP (on sapinet):
+Check BGP (on vm-sapinet):
 ```bash
 vtysh -c "show ip bgp summary"
 ```
 
-Check OSPF (on sapinet):
+Check OSPF (on vm-sapinet):
 ```bash
 vtysh -c "show ip ospf neighbor"
 ```
 
 Test connectivity:
 ```bash
-ping 10.255.0.2  # From sapinet to noisy-edge1
-ping 10.255.0.1  # From noisy-edge1 to sapinet
+ping 10.255.0.2  # From vm-sapinet to rtr-noisy
+ping 10.255.0.1  # From rtr-noisy to vm-sapinet
 ```
 
 ## Troubleshooting
@@ -149,11 +149,11 @@ sudo systemctl status
 Deploy from development machine:
 
 ```bash
-# For noisy-edge1
-nixos-rebuild switch --flake .#noisy-edge1 --target-host root@noisy-edge1 --build-host localhost
+# For rtr-noisy (leaf)
+nixos-rebuild switch --flake .#rtr-noisy --target-host root@rtr-noisy --build-host localhost
 
-# For sapinet
-nixos-rebuild switch --flake .#sapinet --target-host root@sapinet --build-host localhost
+# For vm-sapinet (spine)
+nixos-rebuild switch --flake .#vm-sapinet --target-host root@vm-sapinet --build-host localhost
 ```
 
 ## Post-Deployment
@@ -192,13 +192,13 @@ sudo nixos-rebuild switch --flake .#HOSTNAME
 ## Expected Network Topology
 
 ```
-Spine (sapinet):
+Spine (vm-sapinet):
 - WAN: 45.90.162.251
 - Loopback: 10.254.0.1/32
 - WireGuard: 10.255.0.1/24
 - Runs: OSPF + BGP
 
-Leaf (noisy-edge1):
+Leaf (rtr-noisy):
 - Loopback: 10.254.0.11/32
 - WireGuard: 10.255.0.11/24
 - Runs: BGP + EVPN/VXLAN

@@ -3,7 +3,7 @@
   imports = [ ./hardware-configuration.nix ];
 
   # Host identity
-  networking.hostName = "noisy-edge1";
+  networking.hostName = "rtr-noisy";
 
   # Router-ID / VTEP loopback
   # VLAN/VNI definitions (simplified for now)
@@ -36,7 +36,7 @@
   networking.wireguard.interfaces.wgtransport = {
     ips = [ "10.255.0.11/24" ];
     listenPort = 51820;
-    privateKeyFile = "/etc/wireguard/noisy-edge1.key";
+    privateKeyFile = "/etc/wireguard/rtr-noisy.key";
 
     peers = [
       {
@@ -239,7 +239,7 @@
 
     config = ''
       frr defaults traditional
-      hostname noisy-edge1
+      hostname rtr-noisy
       service integrated-vtysh-config
       log syslog informational
 

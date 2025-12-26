@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  # Hardware-specific configuration for noisy-edge1
+  # Hardware-specific configuration for rtr-noisy
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
