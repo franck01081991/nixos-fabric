@@ -72,7 +72,26 @@ sudo nixos-rebuild switch --flake .#rtr-noisy
 ./scripts/check-fabric.sh
 ```
 
-## 🔗 Individual Git Repositories
+## 🔗 External Configurations
+
+### Option 1: Git Submodules (Recommended)
+
+This repository supports Git submodules for external configurations:
+
+```bash
+# Setup submodules (after creating external repos)
+./scripts/setup-submodules.sh
+
+# Update all submodules
+git submodule update --remote --init
+
+# Check submodule status
+git submodule status
+```
+
+The `.gitmodules` file contains the configuration for external repositories.
+
+### Option 2: Individual Git Repositories
 
 For advanced use cases, individual host configurations are available in separate repositories:
 
