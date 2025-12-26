@@ -65,6 +65,9 @@ Replace `hosts/<host>/hardware-configuration.nix` with content from `/etc/nixos/
 ## Deployment Guide
 
 ### Quick Start
+
+**Note:** The default branch is `master` (not `main`).
+
 ```bash
 # Build a host configuration
 nix build .#nixosConfigurations.sapinet.config.system.build.toplevel
