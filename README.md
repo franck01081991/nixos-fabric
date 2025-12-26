@@ -24,6 +24,7 @@ Repository for managing NixOS hosts via flakes.
 1. On each host, generate private key:
    ```bash
    wg genkey | sudo tee /etc/wireguard/${HOSTNAME}.key
+   sudo chmod 600 /etc/wireguard/${HOSTNAME}.key
    ```
 
 2. Extract public key for peers:
@@ -31,11 +32,19 @@ Repository for managing NixOS hosts via flakes.
    sudo cat /etc/wireguard/${HOSTNAME}.key | wg pubkey
    ```
 
-3. Store public keys in `/etc/nixos/secrets/wireguard-pubkeys.nix`:
+3. Store public keys and endpoints in `/etc/nixos/secrets/wireguard.nix`:
    ```nix
    { 
+     # For sapinet
+     noisyPub = "BASE64_PUBLIC_KEY";
+     noisyEndpoint = "IP_OR_DOMAIN";
+     bondyPub = "BASE64_PUBLIC_KEY";
+     bondyEndpoint = "IP_OR_DOMAIN";
+     leprePub = "BASE64_PUBLIC_KEY";
+     lepreEndpoint = "IP_OR_DOMAIN";
+
+     # For noisy-edge1
      sapinetPub = "BASE64_PUBLIC_KEY";
-     noisyEdge1Pub = "BASE64_PUBLIC_KEY";
    }
    ```
 
