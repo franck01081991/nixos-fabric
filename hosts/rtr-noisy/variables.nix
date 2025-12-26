@@ -1,13 +1,11 @@
-{ ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  network-fabric = {
-    networking = {
-      enable = true;
-      hostName = "rtr-noisy";
-      timeZone = "Europe/Paris";
-      useDHCP = false;
-      useNetworkd = true;
+  networking = {
+    hostName = "rtr-noisy";
+    timeZone = "Europe/Paris";
+    useDHCP = false;
+    useNetworkd = true;
       nameservers = [ "1.1.1.1" "9.9.9.9" ];
       
       loopback = {

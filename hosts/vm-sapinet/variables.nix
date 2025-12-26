@@ -1,13 +1,11 @@
-{ ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  network-fabric = {
-    networking = {
-      enable = true;
-      hostName = "vm-sapinet";
-      timeZone = "Europe/Paris";
-      useDHCP = false;
-      useNetworkd = false;
+  networking = {
+    hostName = "vm-sapinet";
+    timeZone = "Europe/Paris";
+    useDHCP = false;
+    useNetworkd = false;
       nameservers = [ "1.1.1.1" "1.0.0.1" "9.9.9.9" "2606:4700:4700::1111" "2620:fe::fe" ];
       
       defaultGateway = {
