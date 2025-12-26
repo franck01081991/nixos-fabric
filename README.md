@@ -62,11 +62,102 @@ Repository for managing NixOS hosts via flakes.
 ## Hardware Configuration
 Replace `hosts/<host>/hardware-configuration.nix` with content from `/etc/nixos/hardware-configuration.nix` on each host.
 
-## Usage
+## Deployment Guide
+
+### Quick Start
 ```bash
 # Build a host configuration
 nix build .#nixosConfigurations.sapinet.config.system.build.toplevel
 
 # Check hostname
 nix eval .#nixosConfigurations.sapinet.config.networking.hostName
+```
+
+### Full Deployment Process
+
+#### 1. Generate WireGuard Keys
+On each host, run the deployment script:
+```bash
+# On sapinet
+./scripts/deploy-wireguard.sh sapinet 45.90.162.251
+
+# On noisy-edge1
+./scripts/deploy-wireguard.sh noisy-edge1 NOISY_PUBLIC_IP
+```
+
+#### 2. Exchange Public Keys
+Copy the public keys from each host's `/etc/nixos/secrets/wireguard.nix` to the other hosts.
+
+#### 3. Update Configuration
+Edit the WireGuard configuration in `hosts/<host>/default.nix` to replace:
+- `__SAPINET_PUB__` with the actual public key from sapinet
+- `__NOISY_PUB__` with the actual public key from noisy-edge1
+- `__NOISY_ENDPOINT__` with the actual public IP/domain
+
+#### 4. Deploy Configuration
+```bash
+# On sapinet
+sudo nixos-rebuild switch --flake .#sapinet
+
+# On noisy-edge1
+sudo nixos-rebuild switch --flake .#noisy-edge1
+```
+
+#### 5. Verify Connectivity
+```bash
+# Check WireGuard interface
+ip link show wgtransport
+
+# Check WireGuard status
+sudo wg show
+
+# Check BGP sessions (on sapinet)
+vtysh -c "show ip bgp summary"
+
+# Check OSPF neighbors (on sapinet)
+vtysh -c "show ip ospf neighbor"
+
+# Ping over WireGuard
+ping 10.255.0.2  # From sapinet to noisy-edge1
+```
+
+### Remote Deployment
+```bash
+# Build locally and deploy to remote host
+nixos-rebuild switch --flake .#noisy-edge1 --target-host root@noisy-edge1 --build-host localhost
+```
+
+### Troubleshooting
+
+**WireGuard issues:**
+```bash
+# Check WireGuard status
+sudo wg show
+
+# Check interface
+ip addr show wgtransport
+
+# Check routes
+ip route
+```
+
+**BGP/OSPF issues:**
+```bash
+# Check FRR status
+sudo systemctl status frr
+
+# Check BGP sessions
+vtysh -c "show ip bgp summary"
+
+# Check OSPF neighbors
+vtysh -c "show ip ospf neighbor"
+```
+
+**Firewall issues:**
+```bash
+# Check nftables rules
+sudo nft list ruleset
+
+# Check dropped packets
+sudo dmesg | grep nft
 ```
