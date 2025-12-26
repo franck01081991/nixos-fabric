@@ -30,6 +30,8 @@ cd nixos-fabric
 ./scripts/deploy-wireguard.sh rtr-noisy RTR_NOISY_PUBLIC_IP
 ```
 
+**Note**: The new modular structure automatically handles WireGuard configuration through the `wireguard.nix` module. Keys will be used by the variables files.
+
 ### 2. Exchange Public Keys
 
 After generating keys on each host:
@@ -39,14 +41,24 @@ After generating keys on each host:
 
 ### 3. Update Configurations
 
+**With the new modular structure**, edit the variables files instead:
+
 **On vm-sapinet (spine):**
-Edit `hosts/vm-sapinet/default.nix` and replace:
-- `__NOISY_PUB__` with rtr-noisy's public key
-- `__NOISY_ENDPOINT__` with rtr-noisy's public IP
+Edit `hosts/vm-sapinet/variables.nix` and update:
+```nix
+# In network-fabric.wireguard.peers.rtr-noisy
+publicKey = "RTR_NOISY_PUBLIC_KEY";  # Replace with actual key
+endpoint = "RTR_NOISY_IP:51820";      # Replace with actual IP
+```
 
 **On rtr-noisy (leaf):**
-Edit `hosts/rtr-noisy/default.nix` and replace:
-- `__SAPINET_PUB__` with vm-sapinet's public key
+Edit `hosts/rtr-noisy/variables.nix` and update:
+```nix
+# In network-fabric.wireguard.peers.vm-sapinet
+publicKey = "VM_SAPINET_PUBLIC_KEY";  # Replace with actual key
+```
+
+**For additional peers** (like bondy, lepre on vm-sapinet), update the corresponding sections in the variables files.
 
 ### 4. Deploy Configurations
 
@@ -166,18 +178,35 @@ journalctl -u wg-quick@wgtransport -u frr -f
 
 ### Update Configuration
 
-When making changes:
+**With the new modular structure**, follow these best practices:
+
 ```bash
-# Edit configuration
-git pull origin main
-# Make changes
+# Pull latest changes
+git pull origin master
+
+# For host-specific changes, edit the appropriate variables file:
+# - hosts/<hostname>/variables.nix (main configuration)
+# - hosts/<hostname>/base-variables.nix (base overrides)
+
+# For common changes, edit the relevant module:
+# - modules/networking.nix
+# - modules/wireguard.nix
+# - modules/frr.nix
+# - modules/security.nix
+
+# Test configuration
+nix eval .#nixosConfigurations.HOSTNAME.config.networking.hostName
+
+# Commit changes
 git add .
 git commit -m "Update configuration"
-git push origin main
+git push origin master
 
 # Deploy
 sudo nixos-rebuild switch --flake .#HOSTNAME
 ```
+
+**See the [Structure Reference](../reference/STRUCTURE.md) for complete documentation on the new modular system.**
 
 ## Security Notes
 
@@ -194,17 +223,37 @@ Spine (vm-sapinet):
 - Loopback: 10.254.0.1/32
 - WireGuard: 10.255.0.1/24
 - Runs: OSPF + BGP
+- Modules: networking, wireguard, frr (ospf+bgp), security
 
 Leaf (rtr-noisy):
 - Loopback: 10.254.0.11/32
 - WireGuard: 10.255.0.11/24
 - Runs: BGP + EVPN/VXLAN
+- Modules: networking, wireguard, frr (bgp+evpn), security
 
 WireGuard Transport:
 - Port: 51820/UDP
 - Encrypted overlay network
 - Carries BGP/OSPF and data traffic
+- Configured via wireguard.nix module
 ```
+
+## New Modular Architecture
+
+The deployment now uses a modular architecture where each component is configured through dedicated modules:
+
+- **networking.nix**: Handles all network interfaces, DNS, gateways
+- **wireguard.nix**: Manages WireGuard interfaces and peers
+- **frr.nix**: Configures BGP, OSPF, and EVPN
+- **security.nix**: Centralizes SSH, firewall, and hardening
+- **base.nix**: Common packages and users
+
+**Configuration Flow**:
+```
+Module Defaults → Base Variables → Host Variables → Host-Specific Tweaks
+```
+
+This makes the system much more maintainable and scalable. See [Structure Reference](../reference/STRUCTURE.md) for complete details.
 
 ## Support
 

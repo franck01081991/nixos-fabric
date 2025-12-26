@@ -35,16 +35,16 @@ Repository for managing NixOS hosts via flakes.
 3. Store public keys and endpoints in `/etc/nixos/secrets/wireguard.nix`:
    ```nix
    { 
-     # For vm-sapinet
-     noisyPub = "BASE64_PUBLIC_KEY";
-     noisyEndpoint = "IP_OR_DOMAIN";
+     # For vm-sapinet (spine)
+     rtr-noisyPub = "BASE64_PUBLIC_KEY";
+     rtr-noisyEndpoint = "IP_OR_DOMAIN";
      bondyPub = "BASE64_PUBLIC_KEY";
      bondyEndpoint = "IP_OR_DOMAIN";
      leprePub = "BASE64_PUBLIC_KEY";
      lepreEndpoint = "IP_OR_DOMAIN";
 
-     # For rtr-noisy
-     sapinetPub = "BASE64_PUBLIC_KEY";
+     # For rtr-noisy (leaf)
+     vm-sapinetPub = "BASE64_PUBLIC_KEY";
    }
    ```
 
@@ -58,6 +58,8 @@ Repository for managing NixOS hosts via flakes.
    ```bash
    nixos-rebuild switch --flake .#rtr-noisy --target-host root@rtr-noisy --build-host localhost
    ```
+
+**Note**: With the new modular structure, most configuration is now in `hosts/<hostname>/variables.nix` rather than directly in `default.nix`. See the [Structure Reference](reference/STRUCTURE.md) for details.
 
 ## Hardware Configuration
 Replace `hosts/<host>/hardware-configuration.nix` with content from `/etc/nixos/hardware-configuration.nix` on each host.
