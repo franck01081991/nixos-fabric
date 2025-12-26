@@ -30,6 +30,8 @@
     version = 2;
     efiSupport = true;
     useOSProber = true;
+    # Devices for GRUB installation
+    devices = [ "/dev/sda" "/dev/vda" "/dev/nvme0n1" ];
   };
   
   # For virtual machines, you might want to disable GRUB
