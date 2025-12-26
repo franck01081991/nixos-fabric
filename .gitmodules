@@ -1,0 +1,6 @@
+[submodule "hosts/vm-sapinet"]
+	path = hosts/vm-sapinet
+	url = https://github.com/franck01081991/vm-sapinet-config.git
+[submodule "hosts/rtr-noisy"]
+	path = hosts/rtr-noisy
+	url = https://github.com/franck01081991/rtr-noisy-config.git
