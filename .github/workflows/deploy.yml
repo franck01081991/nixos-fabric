@@ -1,0 +1,82 @@
+name: Deploy NixOS Configurations
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target host to deploy'
+        required: true
+        default: 'vm-sapinet'
+        type: choice
+        options:
+        - vm-sapinet
+        - rtr-noisy
+        - all
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+        - development
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.target }}
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v22
+      with:
+        nix_path: nixpkgs=channel:nixos-23.11
+
+    - name: Set up Cachix
+      uses: cachix/cachix-action@v12
+      with:
+        name: nixos-fabric
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+    - name: Build configuration
+      id: build
+      run: |
+        if [ "${{ inputs.target }}" = "all" ]; then
+          nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
+          nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+          echo "targets=vm-sapinet,rtr-noisy" >> $GITHUB_OUTPUT
+        else
+          nix build .#nixosConfigurations.${{ inputs.target }}.config.system.build.toplevel --no-link
+          echo "targets=${{ inputs.target }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Prepare deployment
+      run: |
+        echo "Preparing deployment for ${{ steps.build.outputs.targets }} in ${{ inputs.environment }} environment"
+        mkdir -p deploy
+        cp -r result* deploy/
+
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: nixos-config-${{ inputs.target }}-${{ inputs.environment }}
+        path: deploy/
+
+    - name: Notify deployment
+      if: always()
+      run: |
+        echo "Deployment notification would be sent here"
+        echo "Target: ${{ inputs.target }}"
+        echo "Environment: ${{ inputs.environment }}"
+        echo "Status: ${{ job.status }}"
+
+    - name: Cleanup
+      if: always()
+      run: rm -rf deploy/

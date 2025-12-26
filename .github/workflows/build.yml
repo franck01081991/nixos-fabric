@@ -1,0 +1,52 @@
+name: Build NixOS Configurations
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_run:
+    workflows: ["Validate NixOS Configurations"]
+    branches: [ master ]
+    types:
+      - completed
+
+jobs:
+  build:
+    name: Build Configurations
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v22
+      with:
+        nix_path: nixpkgs=channel:nixos-23.11
+
+    - name: Set up Cachix
+      uses: cachix/cachix-action@v12
+      with:
+        name: nixos-fabric
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      continue-on-error: true
+
+    - name: Build vm-sapinet configuration
+      run: nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
+
+    - name: Build rtr-noisy configuration
+      run: nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+
+    - name: Cache build results
+      uses: actions/cache@v3
+      with:
+        path: /nix/store
+        key: ${{ runner.os }}-nix-${{ hashFiles('flake.nix', 'flake.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-nix-
+
+    - name: List build results
+      run: ls -lah result*
