@@ -406,7 +406,7 @@ nix-instantiate --eval -E '
         ssh.port = 2222;
       };
     };
-  in import ./modules/security/init.nix { inherit config; }'
+  in import ./modules/security/init.nix { inherit config lib pkgs; }'
 ```
 
 ### Debugging
