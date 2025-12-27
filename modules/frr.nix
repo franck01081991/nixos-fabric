@@ -236,14 +236,14 @@ in {
         bgpd.enable = cfg.bgp.enable;
         ospfd.enable = cfg.ospf.enable;
         
-        config = lib.concatStringsSep "\n" [
-          "frr defaults traditional"
-          "hostname ${config.networking.hostName}"
-          "service integrated-vtysh-config"
-          "log syslog informational"
-          
-          # Security configuration
-          ${lib.mkIf cfg.security.enable (lib.concatStringsSep "\n" (
+        config = lib.concatStringsSep "\n" (
+          [
+            "frr defaults traditional"
+            "hostname ${config.networking.hostName}"
+            "service integrated-vtysh-config"
+            "log syslog informational"
+          ]
+          ++ (lib.mkIf cfg.security.enable (
             [
               "!"
               "! BGP Security - RFC 8205 (BGPsec) and RFC 7454 (BGP Operations and Security)"
@@ -276,10 +276,8 @@ in {
               "  ip ospf message-digest-key 1 md5 ${cfg.security.ospfAuthenticationKey}"
               "!"
             ] [])
-          ))}
-          
-          # BGP configuration
-          ${lib.mkIf cfg.bgp.enable (lib.concatStringsSep "\n" (
+          ) [])
+          ++ (lib.mkIf cfg.bgp.enable (
             [
               "router bgp ${toString cfg.bgp.as}"
               "  bgp router-id ${cfg.bgp.routerId}"
@@ -295,26 +293,24 @@ in {
                  )
                ) cfg.bgp.addressFamilies)
             ++ [ "!" ]
-          ))}
-          
-          # EVPN configuration
-          ${lib.mkIf cfg.evpn.enable (lib.concatStringsSep "\n" [
+          ) [])
+          ++ (lib.mkIf cfg.evpn.enable [
             "router bgp ${toString cfg.bgp.as} vrf default"
             "  address-family l2vpn evpn"
             "    neighbor ${lib.concatStringsSep " " cfg.evpn.neighbors} activate"
             "  exit-address-family"
             "!"
-          ])}
-          
-          # OSPF configuration
-          ${lib.mkIf cfg.ospf.enable (lib.concatStringsSep "\n" [
-            "router ospf"
-            "  ospf router-id ${cfg.ospf.routerId}"
-            generateOSPFNetworks cfg.ospf.networks
-            lib.concatStringsSep "\n" (lib.map (iface: "  passive-interface ${iface}") cfg.ospf.passiveInterfaces)
-            "!"
-          ])}
-        ];
+          ] [])
+          ++ (lib.mkIf cfg.ospf.enable (
+            [
+              "router ospf"
+              "  ospf router-id ${cfg.ospf.routerId}"
+              generateOSPFNetworks cfg.ospf.networks
+              lib.concatStringsSep "\n" (lib.map (iface: "  passive-interface ${iface}") cfg.ospf.passiveInterfaces)
+              "!"
+            ]
+          ) [])
+        );
       };
     };
   };
