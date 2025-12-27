@@ -8,54 +8,77 @@
   outputs = { self, nixpkgs, ... }:
     let
       system = "x86_64-linux";
-      
-      # Simple network module
+
       networkModule = { config, lib, pkgs, ... }:
         let
-          cfg = config.network-fabric.network or {};
-        in {
+          cfg = config.network-fabric.network;
+        in
+        {
           options.network-fabric = {
             enable = lib.mkEnableOption "Enable NixOS Fabric";
-            
+
             network = lib.mkOption {
-              type = lib.types.submodule {
+              type = lib.types.submodule ({ ... }: {
                 options = {
-                  enable = lib.mkDefault false;
-                  hostName = lib.mkDefault "nixos-fabric";
-                  domain = lib.mkDefault "fabric.local";
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+                    default = false;
+                    description = "Enable network settings for this host.";
+                  };
+
+                  hostName = lib.mkOption {
+                    type = lib.types.str;
+                    default = "nixos-fabric";
+                    description = "Hostname for this host.";
+                  };
+
+                  domain = lib.mkOption {
+                    type = lib.types.str;
+                    default = "fabric.local";
+                    description = "Domain name.";
+                  };
+
                   dnsServers = lib.mkOption {
                     type = with lib.types; listOf str;
                     default = [ "1.1.1.1" "8.8.8.8" ];
-                    description = "DNS servers used by network-fabric";
+                    description = "DNS servers used by network-fabric.";
                   };
                 };
-              };
+              });
               default = {};
               description = "Network configuration";
             };
           };
-          
-          config = lib.mkIf cfg.enable {
+
+          # Configuration conditionnelle
+          config = lib.mkIf (cfg.enable) {
             networking.hostName = cfg.hostName;
+            networking.nameservers = cfg.dnsServers;
           };
         };
-      
+
       mkHost = { hostname }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             networkModule
-            ({ config, lib, pkgs, ... }:
-            {
+            ({ ... }: {
+              network-fabric.enable = true;
+
               network-fabric.network.enable = true;
               network-fabric.network.hostName = hostname;
+              # network-fabric.network.dnsServers = [ "10.0.0.53" "fd00::53" ];
+            })
+            # Définir system.stateVersion dans la configuration globale
+            ({ config, lib, ... }: {
+              system.stateVersion = "25.11";
             })
           ];
         };
     in
     {
       nixosConfigurations = {
-        "test" = mkHost { hostname = "test"; };
+        test = mkHost { hostname = "test"; };
       };
     };
 }
