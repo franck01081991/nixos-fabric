@@ -146,7 +146,7 @@ let
   # have sensible values even if not explicitly set.
   # ============================================
   
-  cfg = config.network-fabric.security or defaultSecurityConfig;
+  cfg = config.network-fabric.security-improved or defaultSecurityConfig;
 
   # ============================================
   # SSH BANNER GENERATION
@@ -223,7 +223,7 @@ in {
   # - Description
   # ============================================
   
-  options.network-fabric.security = {
+  options.network-fabric.security-improved = {
     enable = mkEnableOption "Enable comprehensive security configuration";
     
     # ==========================================
@@ -328,7 +328,8 @@ in {
     '';
     
     # Firewall configuration
-    networking.firewall = mkIf cfg.firewall.enable {
+    # Only configure traditional firewall if nftables is not enabled
+    networking.firewall = mkIf (cfg.firewall.enable && !config.networking.nftables.enable) {
       enable = true;
       allowedTCPPorts = cfg.firewall.allowedTCP;
       allowedUDPPorts = cfg.firewall.allowedUDP;

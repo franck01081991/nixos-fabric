@@ -5,7 +5,7 @@
 
 {
   # Enable comprehensive security
-  network-fabric.security = {
+  network-fabric.security-improved = {
     enable = true;
     
     # SSH configuration - hardened for spine node

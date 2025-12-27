@@ -17,7 +17,7 @@
             ./modules/base.nix
             ./modules/ssh.nix
             ./modules/nftables.nix
-            ./modules/security-improved.nix  # Improved security module
+            ./modules/security/init.nix  # Comprehensive security module
             ./modules/ansible-improved.nix  # Improved Ansible integration
             ./modules/roles/generic.nix    # Generic role functionality
             ./modules/roles/spine-improved.nix  # Improved spine role
