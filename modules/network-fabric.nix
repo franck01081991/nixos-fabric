@@ -82,8 +82,8 @@ in {
     network = mkOption {
       type = submodule {
         options = {
-          domain = mkDefault defaultFabricConfig.network.domain;
-          dnsServers = mkDefault defaultFabricConfig.network.dnsServers;
+          domain = lib.mkDefault defaultFabricConfig.network.domain;
+          dnsServers = lib.mkDefault defaultFabricConfig.network.dnsServers;
           
           ipv4 = mkOption {
             type = submodule {
