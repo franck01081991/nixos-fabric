@@ -72,11 +72,18 @@
           ] ++ (if ciMode then [ ./modules/ci-bootless.nix ] else []);
         };
 
+      # Minimal router configurations for CI compatibility
+      mkRouter = { name, ciMode ? false }:
+        mkHost { hostname = name; ciMode = ciMode; };
     in
     {
       nixosConfigurations = {
         test = mkHost { hostname = "test"; };
         test-ci = mkHost { hostname = "test-ci"; ciMode = true; };
+        rtr-sapinet = mkRouter { name = "rtr-sapinet"; };
+        rtr-sapinet-ci = mkRouter { name = "rtr-sapinet"; ciMode = true; };
+        rtr-noisy = mkRouter { name = "rtr-noisy"; };
+        rtr-noisy-ci = mkRouter { name = "rtr-noisy"; ciMode = true; };
       };
     };
 }
