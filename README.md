@@ -2,6 +2,20 @@
 
 **Private Repository** - Advanced network automation with hybrid spine/leaf architecture, WireGuard, BGP, OSPF, and EVPN/VXLAN.
 
+## 📚 New Documentation Structure
+
+**📖 Complete documentation is now organized in [docs/](docs/)**
+
+- 🚀 **Getting Started**: Installation, quick start, tutorials
+- 🏗️ **Architecture**: System overview and components  
+- 📦 **Modules**: Security and Ansible module documentation
+- 👨‍💻 **Development**: Contributing guides and conventions
+- 🚢 **Deployment**: Production deployment guides
+- 📖 **Reference**: API and technical reference
+- ❓ **Troubleshooting**: FAQ and debugging guides
+
+**Start here**: [docs/README.md](docs/README.md)
+
 ## 🎯 Architecture Overview
 
 This repository implements a **hybrid network fabric** where nodes can simultaneously act as both **spine** (core) and **leaf** (edge) routers, providing unprecedented flexibility and resilience.
