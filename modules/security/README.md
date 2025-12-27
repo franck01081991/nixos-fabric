@@ -183,7 +183,7 @@ network-fabric.security-improved = {
 
 **After:**
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   # ...
 };

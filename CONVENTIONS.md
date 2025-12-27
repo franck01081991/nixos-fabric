@@ -171,7 +171,7 @@ let f=x:x*x; g=y:let z=y+1;in z; in { ... }
 
 ```nix
 ✅ GOOD - Clear, descriptive names
-options.network-fabric.security = {
+options.network-fabric.security-improved = {
   enable = mkOption { ... };
   ssh = mkOption { ... };
   firewall = mkOption { ... };
@@ -190,7 +190,7 @@ options.nf.sec = {
 
 ```nix
 ✅ GOOD - Logical grouping
-options.network-fabric.security = {
+options.network-fabric.security-improved = {
   # Main enable option
   enable = mkEnableOption "Enable security module";
   
@@ -205,7 +205,7 @@ options.network-fabric.security = {
 }
 
 ❌ AVOID - Random ordering
-options.network-fabric.security = {
+options.network-fabric.security-improved = {
   fail2ban = mkOption { ... };
   enable = mkEnableOption "...";
   auditd = mkOption { ... };
@@ -398,7 +398,7 @@ Common issues and solutions
 ✅ GOOD - Complete examples
 ```nix
 # Production security configuration
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   
   ssh = {
@@ -614,7 +614,7 @@ network-fabric.security-improved = {
 
 **After:**
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   # ...
 };

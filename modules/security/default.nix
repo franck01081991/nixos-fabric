@@ -19,7 +19,7 @@
 #
 # Usage:
 #   imports = [ ../modules/security/init.nix ];
-#   network-fabric.security.enable = true;
+#   network-fabric.security-improved.enable = true;
 #
 # Documentation:
 #   See modules/security/README.md for complete documentation

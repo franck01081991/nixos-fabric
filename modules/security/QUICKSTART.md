@@ -20,7 +20,7 @@
 ### 2. Basic SSH Configuration
 
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   
   ssh = {
@@ -35,7 +35,7 @@ network-fabric.security = {
 ### 3. Basic Firewall Configuration
 
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   
   firewall = {
@@ -52,7 +52,7 @@ network-fabric.security = {
 ### Production Security Setup
 
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   
   # Secure SSH
@@ -99,7 +99,7 @@ network-fabric.security = {
 ### Development/Testing Setup
 
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   
   # Less restrictive SSH for development
@@ -247,7 +247,7 @@ network-fabric.security-improved = {
 
 **After:**
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   # ...
 };
@@ -257,7 +257,7 @@ network-fabric.security = {
 
 **Before:**
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   sshPort = 2222;
   # ...
@@ -266,7 +266,7 @@ network-fabric.security = {
 
 **After:**
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true;
   ssh = {
     enable = true;

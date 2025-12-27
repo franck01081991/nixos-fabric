@@ -63,7 +63,7 @@
 #     ../modules/security/init.nix  # Import security module
 #   ];
 #
-#   network-fabric.security = {
+#   network-fabric.security-improved = {
 #     enable = true;
 #     ssh.port = 2222;
 #     firewall.allowedTCP = [ 2222 80 443 ];
@@ -74,6 +74,6 @@
 # Configuration Reference:
 # 
 # All security configurations are available under:
-# network-fabric.security.{ssh, firewall, fail2ban, apparmor, auditd, secrets, updates, hardening}
+# network-fabric.security-improved.{ssh, firewall, fail2ban, apparmor, auditd, secrets, updates, hardening}
 
 # See modules/security/README.md for detailed documentation

@@ -741,7 +741,7 @@ network-fabric.frr = {
 ### Security Module Options
 
 ```nix
-network-fabric.security = {
+network-fabric.security-improved = {
   enable = true/false;
   ssh = {
     enable = true/false;
