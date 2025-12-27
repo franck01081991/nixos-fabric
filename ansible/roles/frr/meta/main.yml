@@ -1,16 +1,17 @@
 galaxy_info:
   author: Franck
-  description: Common role for fabric nodes
+  description: FRR configuration for NixOS fabric
   company: NixOS Fabric
   license: MIT
   min_ansible_version: "2.15"
   platforms:
-    - name: Linux
+    - name: NixOS
       versions:
         - all
   galaxy_tags:
-    - system
-    - common
-    - setup
+    - networking
+    - frr
+    - bgp
+    - ospf
 
 dependencies: []

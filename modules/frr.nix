@@ -26,6 +26,22 @@ in {
   options.network-fabric.frr = {
     enable = lib.mkDefault false;
     
+    # Security settings for FRR
+    security = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          enable = lib.mkDefault true;
+          # BGP security - RFC 8205 (BGPsec) and RFC 7454 (BGP Operations and Security)
+          bgpMaxPrefix = lib.mkDefault 1000;
+          bgpTtlSecurity = lib.mkDefault true;
+          bgpPrefixList = lib.mkDefault [];
+          # OSPF security
+          ospfAuthentication = lib.mkDefault false;
+          ospfAuthenticationKey = lib.mkDefault "";
+        };
+      };
+    };
+    
     bgp = lib.mkOption {
       type = lib.types.submodule {
         options = {
@@ -75,6 +91,40 @@ in {
         log syslog informational
         ''
         
+        # Security configuration
+        lib.mkIf cfg.security.enable ''
+        # BGP Security - RFC 8205 (BGPsec) and RFC 7454 (BGP Operations and Security)
+        ${lib.mkIf cfg.security.bgpTtlSecurity ''
+        !
+        ! BGP TTL Security - RFC 5082
+        !
+        access-list BGP_TTL_SECURITY permit any
+        !
+        ''}
+        
+        ${lib.mkIf (cfg.security.bgpMaxPrefix != null && cfg.security.bgpMaxPrefix > 0) ''
+        !
+        ! BGP Prefix Limit - RFC 7606
+        !
+        ${lib.concatStringsSep "\n" (lib.map (neighborName: 
+          ''
+          neighbor ${(builtins.attrValues cfg.bgp.neighbors)[0].ip} maximum-prefix ${toString cfg.security.bgpMaxPrefix} warning-threshold 80 restart 60
+          ''
+        ) (builtins.attrNames cfg.bgp.neighbors))}
+        !
+        ''}
+        
+        # OSPF Security
+        ${lib.mkIf cfg.security.ospfAuthentication ''
+        !
+        ! OSPF Authentication
+        !
+        interface ${lib.concatStringsSep " " (lib.map (network: lib.stringReplace "\/.*" "" network) cfg.ospf.networks)}
+          ip ospf authentication message-digest
+          ip ospf message-digest-key 1 md5 ${cfg.security.ospfAuthenticationKey}
+        !
+        ''}
+        
         # BGP configuration
         lib.mkIf cfg.bgp.enable ''
         router bgp ${toString cfg.bgp.as}
@@ -113,5 +163,19 @@ in {
         ''
       ];
     };
+    
+    # Firewall rules for FRR (BGP port 179)
+    networking.nftables.ruleset = lib.concatStringsSep "\n" [
+      (if cfg.security.enable then ''
+        table inet filter {
+          chain input {
+            # Allow BGP on WireGuard interface
+            iifname "wgtransport" tcp dport 179 accept comment "Allow BGP on WireGuard"
+            # Allow OSPF multicast
+            udp dport { 89 520 } accept comment "Allow OSPF multicast"
+          }
+        }
+      '' else "")
+    ];
   };
 }

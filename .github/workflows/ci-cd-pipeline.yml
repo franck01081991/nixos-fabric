@@ -19,7 +19,256 @@ env:
     trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
 jobs:
+  # JOB 8: Deployment Preparation
   # ============================================
+  # Prepares deployment artifacts for
+  # production deployment
+  # ============================================
+  prepare-deployment:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    needs: test-integration
+    # Only run on master branch and if integration tests passed
+    if: |
+      github.ref == 'refs/heads/master' &&
+      needs.test-integration.result == 'success'
+=======
+  # ============================================
+  # JOB 8: Deployment Preparation
+  # ============================================
+  # Prepares deployment artifacts for
+  # production deployment
+  # ============================================
+  prepare-deployment:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    needs: test-integration
+    # Only run on master branch and if integration tests passed
+    if: |
+      github.ref == 'refs/heads/master' &&
+      needs.test-integration.result == 'success'JOB 6: Integration Testing
+  # ============================================
+  # Tests the integration between different
+  # modules and components
+  # ============================================
+  test-integration:
+    name: Test Module Integration
+    runs-on: ubuntu-latest
+    needs: test-security
+    # Only run if security tests passed
+    if: needs.test-security.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test security and networking integration
+      run: |
+        echo "🌐 Testing security + networking..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
+
+    - name: Test security and SSH integration
+      run: |
+        echo "🔐 Testing security + SSH..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
+
+    - name: Test security and fail2ban integration
+      run: |
+        echo "🚨 Testing security + fail2ban..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.jails.sshd.settings.enabled
+=======
+  # ============================================
+  # JOB 6: Configuration Testing
+  # ============================================
+  # Tests the new configuration templates
+  # and ensures they generate valid configurations
+  # ============================================
+  test-configurations:
+    name: Test Configuration Templates
+    runs-on: ubuntu-latest
+    needs: test-security
+    # Only run if security tests passed
+    if: needs.test-security.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Run all configuration tests
+      run: |
+        echo "🧪 Running all configuration tests..."
+        ./tests/run-tests.sh
+
+    - name: Validate WireGuard configuration
+      run: |
+        echo "🔐 Validating WireGuard configuration..."
+        nix-instantiate --eval -E "import ./tests/wireguard-config-test.nix"
+
+    - name: Validate FRR configuration
+      run: |
+        echo "🌐 Validating FRR configuration..."
+        nix-instantiate --eval -E "import ./tests/frr-config-test.nix"
+
+    - name: Validate WireGuard wg0 configuration
+      run: |
+        echo "📄 Validating WireGuard wg0 configuration..."
+        nix-instantiate --eval -E "import ./tests/wireguard-wg0-test.nix"
+
+    - name: Validate WireGuard secrets configuration
+      run: |
+        echo "🔑 Validating WireGuard secrets configuration..."
+        nix-instantiate --eval -E "import ./tests/wireguard-secrets-test.nix"
+
+  # ============================================
+  # JOB 7: Integration Testing
+  # ============================================
+  # Tests the integration between different
+  # modules and components
+  # ============================================
+  test-integration:
+    name: Test Module Integration
+    runs-on: ubuntu-latest
+    needs: test-configurations
+    # Only run if configuration tests passed
+    if: needs.test-configurations.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test security and networking integration
+      run: |
+        echo "🌐 Testing security + networking..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
+
+    - name: Test security and SSH integration
+      run: |
+        echo "🔐 Testing security + SSH..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
+
+    - name: Test security and fail2ban integration
+      run: |
+        echo "🚨 Testing security + fail2ban..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.jails.sshd.settings.enabledJOB 5: Security Testing
+  # ============================================
+  # Runs comprehensive security tests to
+  # ensure the security module works correctly
+  # ============================================
+  test-security:
+    name: Test Security Features
+    runs-on: ubuntu-latest
+    needs: [validate-security, build-configurations]
+    # Only run if security module was validated or configurations were built
+    if: |
+      needs.validate-security.result == 'success' ||
+      needs.build-configurations.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test SSH configuration
+      run: |
+        echo "🔒 Testing SSH security..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
+
+    - name: Test firewall configuration
+      run: |
+        echo "🔥 Testing firewall..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
+
+    - name: Test fail2ban configuration
+      run: |
+        echo "🚫 Testing fail2ban..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.enable
+
+    - name: Test system hardening
+      run: |
+        echo "🛡️ Testing system hardening..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.kernel.sysctl."kernel.kptr_restrict"
+=======
+  # ============================================
+  # JOB 5: Security Testing
+  # ============================================
+  # Runs comprehensive security tests to
+  # ensure the security module works correctly
+  # ============================================
+  test-security:
+    name: Test Security Features
+    runs-on: ubuntu-latest
+    needs: [validate-security, build-configurations]
+    # Only run if security module was validated or configurations were built
+    if: |
+      needs.validate-security.result == 'success' ||
+      needs.build-configurations.result == 'success'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test SSH configuration
+      run: |
+        echo "🔒 Testing SSH security..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
+
+    - name: Test firewall configuration
+      run: |
+        echo "🔥 Testing firewall..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
+
+    - name: Test fail2ban configuration
+      run: |
+        echo "🚫 Testing fail2ban..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.enable
+
+    - name: Test system hardening
+      run: |
+        echo "🛡️ Testing system hardening..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.kernel.sysctl."kernel.kptr_restrict"
+
+    - name: Run new configuration tests
+      run: |
+        echo "🧪 Running new configuration tests..."
+        ./tests/run-tests.sh --quick============================================
   # JOB 1: Repository Structure Validation
   # ============================================
   # Validates that the repository follows our
@@ -523,6 +772,7 @@ jobs:
 # • Configuration validation for all hosts
 # • Build verification for all configurations
 # • Security feature testing
+# • Configuration template testing
 # • Integration testing between modules
 # • Deployment artifact preparation
 # • Documentation validation
@@ -536,12 +786,14 @@ jobs:
 # • Skip unnecessary jobs based on commit content
 # • Smart dependency management
 # • Reduced CI/CD runtime through intelligent filtering
+# • Automatic configuration template validation
 
 # Success Criteria:
 # ✅ All jobs complete successfully
 # ✅ No syntax errors in any configuration
 # ✅ Security module works correctly
 # ✅ All configurations can be built
+# ✅ Configuration templates generate valid configurations
 # ✅ Documentation is complete
 # ✅ Deployment artifacts are ready
 #
@@ -551,6 +803,7 @@ jobs:
 # ✅ Lower resource consumption
 # ✅ More efficient use of GitHub Actions minutes
 # ✅ Better alignment with actual code changes
+# ✅ Automatic validation of configuration templates
 
 # The pipeline ensures that the NixOS Fabric repository
 # maintains high quality, security, and organization standards

@@ -1,12 +1,12 @@
 ---
 # Handlers for common role
 
-- name: reload sysctl
+- name: Reload sysctl
   ansible.builtin.command: sysctl --system
-  listen: reload sysctl
+  listen: Reload sysctl
 
-- name: restart sshd
+- name: Restart sshd
   ansible.builtin.service:
     name: sshd
     state: restarted
-  listen: restart sshd
+  listen: Restart sshd

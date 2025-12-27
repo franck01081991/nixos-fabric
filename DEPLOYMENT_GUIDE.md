@@ -1,368 +1,258 @@
-# Guide de déploiement complet
+# Deployment Guide for NixOS Fabric
 
-## Table des matières
+This guide will help you deploy the NixOS Fabric project. It covers the deployment process from start to finish, including setting up the environment, configuring the nodes, and running the playbooks.
 
-1. [Prérequis](#prérequis)
-2. [Architecture](#architecture)
-3. [Préparation](#préparation)
-4. [Déploiement manuel](#déploiement-manuel)
-5. [Déploiement automatisé](#déploiement-automatisé)
-6. [Vérification](#vérification)
-7. [Monitoring](#monitoring)
-8. [Maintenance](#maintenance)
-9. [Dépannage](#dépannage)
-10. [Sécurité](#sécurité)
+## Table of Contents
 
-## Prérequis
+- [Prerequisites](#prerequisites)
+- [Setting Up the Environment](#setting-up-the-environment)
+- [Configuring the Nodes](#configuring-the-nodes)
+- [Running the Playbooks](#running-the-playbooks)
+- [Verifying the Deployment](#verifying-the-deployment)
+- [Troubleshooting](#troubleshooting)
+- [Best Practices](#best-practices)
 
-### Matériel
-- **rtr-sapinet** : VPS avec IP publique (45.90.162.251)
-- **rtr-noisy** : Machine physique avec ports LAN (enp2s0-enp6s0)
-- Connexion réseau entre les deux machines
+## Prerequisites
 
-### Logiciel
-- NixOS 25.11 sur les deux machines
-- Accès root ou sudo
-- Clés SSH configurées
+Before you start, ensure you have the following:
 
-### Réseau
-- Ports ouverts : TCP 22, UDP 51820
-- MTU compatible avec WireGuard (1420)
+- NixOS or Nix package manager installed
+- Git
+- Basic knowledge of Nix and Ansible
+- Access to the nodes you want to deploy
 
-## Architecture
+## Setting Up the Environment
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│                        rtr-sapinet (Spine)                     │
-│                                                               │
-│  WAN: ens18 (45.90.162.251/32)                                │
-│  Loopback: 10.254.0.1/32                                      │
-│  WireGuard: wgtransport (10.255.0.1/24)                       │
-│  BGP: AS 65000, iBGP avec rtr-noisy                           │
-└───────────────────────────────────────────────────────────────┘
-                                      ↓ WireGuard (UDP 51820)
-                                      ↓ BGP (TCP 179)
-                                      ↓ VXLAN (UDP 4789)
-┌───────────────────────────────────────────────────────────────┐
-│                        rtr-noisy (Spine+Leaf)                  │
-│                                                               │
-│  WAN: enp1s0 (DHCP)                                          │
-│  Loopback: 10.254.0.11/32                                     │
-│  WireGuard: wgtransport (10.255.0.11/24)                      │
-│  BGP: AS 65000, iBGP avec rtr-sapinet, Cluster-ID 10.254.0.11 │
-│                                                               │
-│  Bridge: br0 (VLAN-aware)                                    │
-│    ├─ VLAN10: 10.10.10.1/24 (Management, DHCP)                │
-│    ├─ VLAN20: 10.10.20.1/24 (No DHCP)                         │
-│    ├─ VLAN30: 10.10.30.1/24 (DHCP)                            │
-│    └─ VLAN40: 10.10.40.1/24 (DHCP)                            │
-│                                                               │
-│  VXLAN: vxlan10-40 (VNI 1010-1040)                           │
-│  LAN Ports: enp2s0-enp6s0 (Untagged VLAN10)                   │
-│                                                               │
-│  Monitoring: Prometheus, Grafana, Node Exporter               │
-└───────────────────────────────────────────────────────────────┘
-```
+### Clone the Repository
 
-## Préparation
-
-### 1. Cloner le dépôt
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/franck01081991/nixos-fabric.git
 cd nixos-fabric
 ```
 
-### 2. Configurer l'inventaire Ansible
+2. Initialize the submodules:
 
-Éditez `ansible/inventory/hosts.ini`:
+```bash
+git submodule update --init --recursive
+```
+
+### Install the Required Dependencies
+
+1. Install the required dependencies:
+
+```bash
+nix-shell
+```
+
+2. Install Ansible:
+
+```bash
+nix-env -iA nixos.ansible
+```
+
+## Configuring the Nodes
+
+### Configure the Inventory
+
+1. Edit the inventory file to include your nodes:
+
+```bash
+vim ansible/inventory/hosts.ini
+```
+
+2. Add your nodes to the inventory file:
 
 ```ini
-[rtr-sapinet]
-rtr-sapinet ansible_host=45.90.162.251 ansible_user=franck
+[spine]
+rtr-sapinet ansible_host=192.168.1.1
 
-[rtr-noisy]
-rtr-noisy ansible_host=rtr-noisy.local ansible_user=franck
+[leaf]
+rtr-noisy ansible_host=192.168.1.2
 
-[routers:children]
-rtr-sapinet
-rtr-noisy
+[fabric:children]
+spine
+leaf
+
+[fabric:vars]
+ansible_user=root
+ansible_become=true
 ```
 
-### 3. Installer les dépendances
+### Configure the Host Variables
+
+1. Edit the host variables for each node:
 
 ```bash
-# Sur votre machine de contrôle
-sudo apt install ansible sops age
-
-# Ou avec Nix
-nix-shell -p ansible sops age
+vim ansible/host_vars/rtr-sapinet.yml
+vim ansible/host_vars/rtr-noisy.yml
 ```
 
-## Déploiement manuel
+2. Add the required variables for each node:
 
-### 1. Générer les clés WireGuard
-
-**Sur rtr-sapinet:**
-```bash
-sudo mkdir -p /etc/wireguard
-wg genkey | sudo tee /etc/wireguard/rtr-sapinet.key | wg pubkey | sudo tee /etc/wireguard/rtr-sapinet.pub
-sudo chmod 600 /etc/wireguard/rtr-sapinet.key
+```yaml
+# Example host variables for rtr-sapinet
+wg_ip_address: "10.255.0.1/24"
+wg_port: 51820
+wg_mtu: 1420
+wg_peers:
+  - public_key: "peer_public_key"
+    allowed_ips: ["10.255.0.11/32", "10.254.0.11/32"]
+    endpoint: "45.90.162.251:51820"
+    persistent_keepalive: 25
 ```
 
-**Sur rtr-noisy:**
-```bash
-sudo mkdir -p /etc/wireguard
-wg genkey | sudo tee /etc/wireguard/rtr-noisy.key | wg pubkey | sudo tee /etc/wireguard/rtr-noisy.pub
-sudo chmod 600 /etc/wireguard/rtr-noisy.key
-```
+### Configure the Group Variables
 
-### 2. Échanger les clés publiques
-
-**Depuis rtr-sapinet:**
-```bash
-scp /etc/wireguard/rtr-sapinet.pub franck@rtr-noisy:/tmp/
-```
-
-**Depuis rtr-noisy:**
-```bash
-scp /etc/wireguard/rtr-noisy.pub franck@rtr-sapinet:/tmp/
-```
-
-### 3. Configurer les placeholders
-
-**Sur rtr-sapinet:**
-```bash
-sudo sed -i "s/__RTR_NOISY_PUB__/$(cat /tmp/rtr-noisy.pub)/" /etc/nixos/variables.nix
-```
-
-**Sur rtr-noisy:**
-```bash
-sudo sed -i "s/__RTR_SAPINET_PUB__/$(cat /tmp/rtr-sapinet.pub)/" /etc/nixos/variables.nix
-```
-
-### 4. Appliquer la configuration
-
-**Sur les deux machines:**
-```bash
-sudo nixos-rebuild switch
-```
-
-## Déploiement automatisé
-
-### 1. Utiliser le script de déploiement
+1. Edit the group variables for each group:
 
 ```bash
-# Sur votre machine de contrôle
-./scripts/deploy-wireguard-bgp.sh
+vim ansible/group_vars/spine.yml
+vim ansible/group_vars/leaf.yml
 ```
 
-Ou en mode dry-run:
-```bash
-./scripts/deploy-wireguard-bgp.sh --dry-run
+2. Add the required variables for each group:
+
+```yaml
+# Example group variables for spine
+bgp_as: 65001
+bgp_router_id: "10.254.0.1"
+bgp_cluster_id: "10.254.0.11"
+bgp_neighbors:
+  - ip: "10.254.0.11"
+    as: 65001
+    ebgp_multihop: 5
+bgp_networks: ["10.254.0.1/32"]
+bgp_evpn_enabled: false
 ```
 
-### 2. Utiliser le playbook Ansible
+## Running the Playbooks
 
-```bash
-# Depuis le répertoire ansible
-ansible-playbook playbooks/deploy-wireguard-bgp.yml
-```
+### Run the Common Setup Playbook
 
-### 3. Utiliser sops-nix pour les secrets
-
-Voir [SECRETS_GUIDE.md](SECRETS_GUIDE.md) pour la gestion sécurisée des secrets.
-
-## Vérification
-
-### 1. Vérifier WireGuard
-
-```bash
-# Sur les deux machines
-wg show
-
-# Tester la connectivité
-ping 10.255.0.1    # Depuis rtr-noisy
-ping 10.255.0.11   # Depuis rtr-sapinet
-```
-
-### 2. Vérifier BGP
+1. Run the common setup playbook to set up the common configuration on all nodes:
 
 ```bash
-# Sur les deux machines
-vtysh -c "show bgp summary"
-vtysh -c "show bgp neighbors"
-
-# Vérifier les routes
-vtysh -c "show ip bgp"
+ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup-common.yml
 ```
 
-### 3. Vérifier les VLANs (rtr-noisy seulement)
+### Run the Main Playbook
+
+1. Run the main playbook to configure the nodes:
 
 ```bash
-bridge vlan show
-ip a show br0.10
-ip a show br0.20
-ip a show br0.30
-ip a show br0.40
+ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/main.yml
 ```
 
-### 4. Tester DHCP
+### Run the Verification Playbook
 
-Branchez un appareil sur un port LAN (enp2s0-enp6s0) en mode untagged. L'appareil devrait recevoir une IP dans 10.10.10.0/24.
-
-## Monitoring
-
-### 1. Accéder à Grafana
-
-Sur rtr-noisy, accédez à http://rtr-noisy:3000
-
-### 2. Vérifier les exporteurs
+1. Run the verification playbook to verify the deployment:
 
 ```bash
-# Vérifier que les exporteurs sont en cours d'exécution
-curl -s http://localhost:9100/metrics | head  # Node Exporter
-curl -s http://localhost:9586/metrics | head  # WireGuard Exporter
-curl -s http://localhost:2605/metrics | head  # FRR Exporter
+ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/verify-fabric.yml
 ```
 
-### 3. Vérifier Prometheus
+## Verifying the Deployment
+
+### Verify the WireGuard Configuration
+
+1. Verify the WireGuard configuration on each node:
 
 ```bash
-curl -s http://localhost:9090/targets | jq
+sudo wg show
 ```
 
-## Maintenance
-
-### 1. Mises à jour
+2. Verify the WireGuard interface:
 
 ```bash
-# Mettre à jour le système
-sudo nix-channel --update
-sudo nixos-rebuild switch --upgrade
+ip addr show wgtransport
 ```
 
-### 2. Rotation des clés WireGuard
+### Verify the FRR Configuration
+
+1. Verify the FRR configuration on each node:
 
 ```bash
-# Générer de nouvelles clés
-wg genkey | sudo tee /etc/wireguard/$(hostname).key | wg pubkey | sudo tee /etc/wireguard/$(hostname).pub
-
-# Mettre à jour la configuration
-sudo systemctl restart wg-quick@wgtransport
+sudo vtysh
+show running-config
 ```
 
-### 3. Sauvegardes
+2. Verify the BGP neighbors:
 
 ```bash
-# Sauvegarder la configuration
-sudo cp -r /etc/nixos /backup/nixos-$(date +%Y%m%d)
-
-# Sauvegarder les clés (sécurisé!)
-sudo cp /etc/wireguard/*.key /backup/wireguard-$(date +%Y%m%d).key
-sudo chmod 600 /backup/wireguard-$(date +%Y%m%d).key
+show ip bgp neighbors
 ```
 
-## Dépannage
+### Verify the Monitoring Configuration
 
-### Problèmes WireGuard
-
-**Symptôme:** Pas de handshake
-```bash
-# Vérifier l'interface
-wg show
-
-# Vérifier les logs
-journalctl -u wg-quick@wgtransport
-
-# Tester la connectivité
-ping -M do -s 1400 10.255.0.1
-```
-
-### Problèmes BGP
-
-**Symptôme:** Session BGP non établie
-```bash
-# Vérifier l'état BGP
-vtysh -c "show bgp neighbors"
-
-# Vérifier les logs FRR
-journalctl -u frr
-
-# Tester la connectivité entre loopbacks
-ping 10.254.0.11
-```
-
-### Problèmes VLAN
-
-**Symptôme:** VLANs non fonctionnels
-```bash
-# Vérifier la configuration du bridge
-bridge vlan show
-
-# Vérifier les logs du service
-journalctl -u vlan-port-flags
-journalctl -u vxlan-port-flags
-
-# Redémarrer les services
-sudo systemctl restart systemd-networkd
-sudo systemctl restart vlan-port-flags
-sudo systemctl restart vxlan-port-flags
-```
-
-## Sécurité
-
-### 1. Vérifier le pare-feu
+1. Verify the Prometheus configuration:
 
 ```bash
-# Vérifier les règles nftables
-sudo nft list ruleset
-
-# Tester les règles
-sudo nft -a list ruleset
+sudo systemctl status prometheus
 ```
 
-### 2. Vérifier SSH
+2. Verify the Grafana configuration:
 
 ```bash
-# Vérifier la configuration
-sudo sshd -T
-
-# Tester la connexion
-ssh -v franck@localhost
+sudo systemctl status grafana
 ```
 
-### 3. Vérifier le hardening
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection Issues**: Ensure that the nodes are accessible and that the SSH configuration is correct.
+
+2. **Permission Issues**: Ensure that the Ansible user has the necessary permissions to run the playbooks.
+
+3. **Configuration Issues**: Ensure that the configuration files are correct and that the variables are properly defined.
+
+### Debugging
+
+1. **Run the Playbooks with Verbose Output**:
 
 ```bash
-# Vérifier les paramètres sysctl
-sudo sysctl -a | grep net.ipv4.conf
-
-# Vérifier les services
-sudo systemctl status fail2ban
-sudo systemctl status apparmor
-sudo systemctl status auditd
+ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/main.yml -v
 ```
 
-## Annexes
-
-### Commandes utiles
+2. **Check the Logs**:
 
 ```bash
-# Redémarrer tous les services réseau
-sudo systemctl restart systemd-networkd frr wg-quick@wgtransport
-
-# Vérifier tous les services
-sudo systemctl status systemd-networkd frr wg-quick@wgtransport prometheus node-exporter grafana
-
-# Vérifier les logs
-journalctl -u systemd-networkd -u frr -u wg-quick@wgtransport
+sudo journalctl -u wireguard
+sudo journalctl -u frr
+sudo journalctl -u prometheus
+sudo journalctl -u grafana
 ```
 
-### Schéma réseau
+## Best Practices
 
-Voir [NETWORK_DIAGRAM.md](NETWORK_DIAGRAM.md) pour un schéma détaillé.
+### Configuration Best Practices
 
-### Journal des changements
+- Keep the configuration files organized and well-documented.
+- Use meaningful variable names and comments.
+- Test the configuration locally before deploying to production.
 
-Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des modifications.
+### Deployment Best Practices
+
+- Use a staging environment to test the deployment before deploying to production.
+- Use version control to track changes to the configuration files.
+- Use Ansible tags to run specific parts of the playbooks.
+
+### Monitoring Best Practices
+
+- Monitor the deployment to ensure that the nodes are running correctly.
+- Use Prometheus and Grafana to monitor the performance and health of the nodes.
+- Set up alerts to notify you of any issues.
+
+## Conclusion
+
+This guide has covered the deployment process for the NixOS Fabric project. By following these steps, you should be able to deploy the project successfully. If you encounter any issues, please refer to the troubleshooting section or open an issue on GitHub.
+
+## License
+
+This guide is licensed under the MIT License.
+
+## Thank You
+
+Thank you for using NixOS Fabric! Your feedback and contributions are greatly appreciated.
