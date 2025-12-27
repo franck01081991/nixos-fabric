@@ -1,0 +1,48 @@
+# Ansible Role: base
+
+## Tasks
+
+```yaml
+# Base setup for NixOS fabric nodes
+---
+- name: Install common packages
+  ansible.builtin.package:
+    name:
+      - git
+      - curl
+      - vim
+      - wireguard-tools
+      - frr
+    state: present
+  
+- name: Create common directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/nixos/secrets
+    - /etc/wireguard
+  
+- name: Configure console keymap
+  ansible.builtin.copy:
+    dest: /etc/vconsole.conf
+    content: "KEYMAP=fr"
+    mode: '0644'
+  
+- name: Configure sudo for wheel group
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+```
+
+## Usage
+
+```yaml
+- hosts: all
+  roles:
+    - base
+```
+

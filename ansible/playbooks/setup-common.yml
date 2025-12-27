@@ -1,0 +1,15 @@
+---
+# Playbook to setup common configuration on fabric nodes
+
+- name: Apply common configuration to fabric nodes
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - common
+
+  tasks:
+    - name: Verify common setup
+      ansible.builtin.debug:
+        msg: "Common setup completed successfully on {{ inventory_hostname }}"

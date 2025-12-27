@@ -16,6 +16,7 @@ let
     
     # Playbooks to run
     playbooks = lib.mkDefault [
+      "setup-common.yml"
       "main.yml"
       "verify-fabric.yml"
     ];
