@@ -5,15 +5,8 @@
 
 { config, lib, pkgs, ... }:
 
-let
-  # Import all security submodules
-  securityModules = [
+{
+  imports = [
     ./default.nix  # Main security module
   ];
-
-  # Combine all security configurations
-  combinedConfig = lib.foldl' (acc: module: 
-    acc // (import module { inherit config lib pkgs; })
-  ) {} securityModules;
-
-in combinedConfig
+}
