@@ -1,9 +1,6 @@
 { config, lib, pkgs, ... }:
 
-let
-  cfg = config.network-fabric.base || {};
-
-in {
+{
   options.network-fabric.base = {
     enable = lib.mkDefault false;
     
@@ -52,24 +49,32 @@ in {
     configDir = lib.mkDefault "/etc/nixos-fabric";
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkForce {
     # Common packages
-    environment.systemPackages = with pkgs; cfg.packages;
+    environment.systemPackages = with pkgs; [
+      "git"
+      "curl"
+      "vim"
+      "wireguard-tools"
+      "frr"
+    ];
     
     # Common users
-    users.users.franck = lib.mkIf cfg.users.franck.enable {
+    users.users.franck = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
-      openssh.authorizedKeys.keys = [ cfg.users.franck.sshKey ];
+      openssh.authorizedKeys.keys = [ "" ];
     };
     
     security.sudo.wheelNeedsPassword = false;
     
     # Common system settings
-    console.keyMap = cfg.system.console.keyMap;
-    system.stateVersion = cfg.system.stateVersion;
+    console.keyMap = "fr";
+    system.stateVersion = "25.11";
     
-    # Set configDir for other modules
-    network-fabric.base.configDir = cfg.configDir;
+    # Create config directory
+    system.activationScripts.configDir = lib.mkBefore ''
+      mkdir -p /etc/nixos-fabric
+    '';
   };
 }

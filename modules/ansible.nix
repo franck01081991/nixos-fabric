@@ -1,7 +1,8 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.network-fabric.ansible || {};
+  cfg = config.network-fabric.ansible;
+  baseCfg = config.network-fabric.base;
   
   # Default Ansible configuration
   defaultAnsibleConfig = {
@@ -22,7 +23,7 @@ let
     # Ansible configuration options
     configOptions = lib.mkDefault {
       defaults = {
-        inventory = "${config.network-fabric.base.configDir}/ansible/inventory/hosts.ini";
+        inventory = "${baseCfg.configDir}/ansible/inventory/hosts.ini";
         remote_user = "root";
         host_key_checking = false;
         interpreter_python = "auto_silent";
@@ -72,7 +73,7 @@ let
       ${pkgs.ansible}/bin/ansible-playbook \
         --inventory ${defaultAnsibleConfig.configOptions.defaults.inventory} \
         --limit "$TARGET" \
-        "${config.network-fabric.base.configDir}/ansible/playbooks/$PLAYBOOK"
+        "${baseCfg.configDir}/ansible/playbooks/$PLAYBOOK"
     '';
   };
 
@@ -127,16 +128,16 @@ in {
     # Create Ansible directory structure
     systemd.tmpfiles.rules = [
       "d ${defaultAnsibleConfig.configOptions.defaults.inventory} 0755 root root -"
-      "d ${config.network-fabric.base.configDir}/ansible/playbooks 0755 root root -"
-      "d ${config.network-fabric.base.configDir}/ansible/roles 0755 root root -"
-      "d ${config.network-fabric.base.configDir}/ansible/host_vars 0755 root root -"
-      "d ${config.network-fabric.base.configDir}/ansible/group_vars 0755 root root -"
+      "d ${baseCfg.configDir}/ansible/playbooks 0755 root root -"
+      "d ${baseCfg.configDir}/ansible/roles 0755 root root -"
+      "d ${baseCfg.configDir}/ansible/host_vars 0755 root root -"
+      "d ${baseCfg.configDir}/ansible/group_vars 0755 root root -"
     ];
     
     # Generate Ansible configuration
     system.activationScripts.ansible-config = ''
-      mkdir -p ${config.network-fabric.base.configDir}/ansible
-      echo "${ansibleConfigContent}" > ${config.network-fabric.base.configDir}/ansible/ansible.cfg
+      mkdir -p ${baseCfg.configDir}/ansible
+      echo "${ansibleConfigContent}" > ${baseCfg.configDir}/ansible/ansible.cfg
     '';
     
     # Generate inventory if enabled
@@ -148,8 +149,8 @@ in {
     system.activationScripts.ansible-host-vars = lib.concatStringsSep "\n" (
       lib.mapAttrsToList (hostName: hostVars:
         ''
-          mkdir -p ${config.network-fabric.base.configDir}/ansible/host_vars
-          echo "${lib.generators.toYAML hostVars}" > ${config.network-fabric.base.configDir}/ansible/host_vars/${hostName}.yml
+          mkdir -p ${baseCfg.configDir}/ansible/host_vars
+          echo "${lib.generators.toYAML hostVars}" > ${baseCfg.configDir}/ansible/host_vars/${hostName}.yml
         ''
       ) cfg.hostVars
     );
@@ -158,8 +159,8 @@ in {
     system.activationScripts.ansible-group-vars = lib.concatStringsSep "\n" (
       lib.mapAttrsToList (groupName: groupVars:
         ''
-          mkdir -p ${config.network-fabric.base.configDir}/ansible/group_vars
-          echo "${lib.generators.toYAML groupVars}" > ${config.network-fabric.base.configDir}/ansible/group_vars/${groupName}.yml
+          mkdir -p ${baseCfg.configDir}/ansible/group_vars
+          echo "${lib.generators.toYAML groupVars}" > ${baseCfg.configDir}/ansible/group_vars/${groupName}.yml
         ''
       ) cfg.groupVars
     );
