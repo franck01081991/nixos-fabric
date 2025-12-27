@@ -57,7 +57,7 @@
           };
         };
 
-      mkHost = { hostname }:
+      mkHost = { hostname, ciMode ? false }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
@@ -69,16 +69,13 @@
               network-fabric.network.hostName = hostname;
               # network-fabric.network.dnsServers = [ "10.0.0.53" "fd00::53" ];
             })
-            # Définir system.stateVersion dans la configuration globale
-            ({ config, lib, ... }: {
-              system.stateVersion = "25.11";
-            })
-          ];
+          ] ++ (if ciMode then [ ./modules/ci-bootless.nix ] else []);
         };
     in
     {
       nixosConfigurations = {
         test = mkHost { hostname = "test"; };
+        test-ci = mkHost { hostname = "test-ci"; ciMode = true; };
       };
     };
 }

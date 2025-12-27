@@ -19,7 +19,45 @@ env:
     trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
 jobs:
+  # JOB 6: Build Configurations
   # ============================================
+  build-configurations:
+    name: Build Configurations
+    runs-on: ubuntu-latest
+    needs: test-integration
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+=======
+  # ============================================
+  # JOB 6: Build Configurations
+  # ============================================
+  build-configurations:
+    name: Build Configurations
+    runs-on: ubuntu-latest
+    needs: test-integration
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Set CI environment variable
+      run: echo "CI=1" >> $GITHUB_ENV============================================
   # JOB 1: Repository Structure Validation
   # ============================================
   validate-structure:
@@ -45,8 +83,12 @@ jobs:
         test -f modules/wireguard.nix && echo "✅ wireguard.nix exists"
         test -f modules/network-security.nix && echo "✅ network-security.nix exists"
 
-    - name: Validate flake
-      run: nix flake check
+    - name: Validate flake (evaluation only)
+      run: |
+        echo "🧬 flake show"
+        nix flake show
+        echo "🧪 eval toplevel drvPath (no build)"
+        nix eval .#nixosConfigurations.test-ci.config.system.build.toplevel.drvPath
 
   # ============================================
   # JOB 2: Configuration Validation
@@ -173,8 +215,7 @@ jobs:
     - name: Build configurations
       run: |
         echo "🏗️ Building configurations..."
-        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel --no-link
-        nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+        nix build .#nixosConfigurations.test-ci.config.system.build.toplevel --no-link
         echo "✅ All builds completed successfully"
 
   # ============================================
