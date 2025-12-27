@@ -193,6 +193,10 @@ main() {
     run_test "wireguard-secrets" "tests/wireguard-secrets-test.nix" "WireGuard secrets configuration test"
     total_tests=$((total_tests + 1))
     [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "integration" "tests/integration-test.nix" "Integration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
   fi
   
   # Summary

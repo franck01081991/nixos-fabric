@@ -1,5 +1,5 @@
 {
-  description = "Spine/leaf fabric (rtr-sapinet + rtr-noisy)";
+  description = "NixOS Fabric - New Clean Flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
@@ -7,34 +7,75 @@
 
   outputs = { self, nixpkgs, ... }:
     let
-      mkHost = { system, hostname }:
+      system = "x86_64-linux";
+
+      networkModule = { config, lib, pkgs, ... }:
+        let
+          cfg = config.network-fabric.network;
+        in
+        {
+          options.network-fabric = {
+            enable = lib.mkEnableOption "Enable NixOS Fabric";
+
+            network = lib.mkOption {
+              type = lib.types.submodule ({ ... }: {
+                options = {
+                  enable = lib.mkOption {
+                    type = lib.types.bool;
+                    default = false;
+                    description = "Enable network settings for this host.";
+                  };
+
+                  hostName = lib.mkOption {
+                    type = lib.types.str;
+                    default = "nixos-fabric";
+                    description = "Hostname for this host.";
+                  };
+
+                  domain = lib.mkOption {
+                    type = lib.types.str;
+                    default = "fabric.local";
+                    description = "Domain name.";
+                  };
+
+                  dnsServers = lib.mkOption {
+                    type = with lib.types; listOf str;
+                    default = [ "1.1.1.1" "8.8.8.8" ];
+                    description = "DNS servers used by network-fabric.";
+                  };
+                };
+              });
+              default = {};
+              description = "Network configuration";
+            };
+          };
+
+          # Configuration conditionnelle
+          config = lib.mkIf (cfg.enable) {
+            networking.hostName = cfg.hostName;
+            networking.nameservers = cfg.dnsServers;
+          };
+        };
+
+      mkHost = { hostname, ciMode ? false }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/network-fabric.nix  # Central fabric module
-            ./modules/lib.nix
-            ./modules/dynamic.nix
-            ./modules/base.nix
-            ./modules/ssh.nix
-            ./modules/nftables.nix
-            ./modules/security/init.nix  # Comprehensive security module
-            ./modules/ansible-improved.nix  # Improved Ansible integration
-            ./modules/auto-updates.nix     # Auto-updates configuration
-            ./modules/monitoring.nix      # Monitoring configuration
-            ./modules/roles/generic.nix    # Generic role functionality
-            ./modules/roles/spine-improved.nix  # Improved spine role
-            ./modules/roles/leaf-improved.nix   # Improved leaf role
+            networkModule
+            ({ ... }: {
+              network-fabric.enable = true;
 
-            ./hosts/${hostname}/hardware-configuration.nix
-            ./hosts/${hostname}/default.nix
-          ];
+              network-fabric.network.enable = true;
+              network-fabric.network.hostName = hostname;
+              # network-fabric.network.dnsServers = [ "10.0.0.53" "fd00::53" ];
+            })
+          ] ++ (if ciMode then [ ./modules/ci-bootless.nix ] else []);
         };
     in
     {
       nixosConfigurations = {
-        "rtr-sapinet" = mkHost { system = "x86_64-linux"; hostname = "rtr-sapinet"; };
-        "rtr-noisy" = mkHost { system = "x86_64-linux"; hostname = "rtr-noisy"; };
-        "test-vm" = mkHost { system = "x86_64-linux"; hostname = "test-vm"; };
+        test = mkHost { hostname = "test"; };
+        test-ci = mkHost { hostname = "test-ci"; ciMode = true; };
       };
     };
 }

@@ -79,26 +79,30 @@ in {
     };
     
     # Network settings
-    network = mkOption {
-      type = submodule {
+    network = lib.mkOption {
+      type = lib.types.submodule {
         options = {
-          domain = mkDefault defaultFabricConfig.network.domain;
-          dnsServers = mkDefault defaultFabricConfig.network.dnsServers;
+          domain = lib.mkDefault defaultFabricConfig.network.domain;
+          dnsServers = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = defaultFabricConfig.network.dnsServers;
+            description = "DNS servers used by network-fabric";
+          };
           
-          ipv4 = mkOption {
-            type = submodule {
+          ipv4 = lib.mkOption {
+            type = lib.types.submodule {
               options = {
-                prefix = mkDefault defaultFabricConfig.network.ipv4.prefix;
-                gateway = mkDefault defaultFabricConfig.network.ipv4.gateway;
+                prefix = lib.mkDefault defaultFabricConfig.network.ipv4.prefix;
+                gateway = lib.mkDefault defaultFabricConfig.network.ipv4.gateway;
               };
             };
           };
           
-          ipv6 = mkOption {
-            type = submodule {
+          ipv6 = lib.mkOption {
+            type = lib.types.submodule {
               options = {
-                prefix = mkDefault defaultFabricConfig.network.ipv6.prefix;
-                gateway = mkDefault defaultFabricConfig.network.ipv6.gateway;
+                prefix = lib.mkDefault defaultFabricConfig.network.ipv6.prefix;
+                gateway = lib.mkDefault defaultFabricConfig.network.ipv6.gateway;
               };
             };
           };

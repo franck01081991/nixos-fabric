@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.network-fabric.networking || {};
+  cfg = if config.network-fabric ? network then config.network-fabric.network else {};
   
   # Generate interface configurations
   generateInterfaces = interfaces: 
@@ -14,7 +14,7 @@ let
     ) interfaces;
 
 in {
-  options.network-fabric.networking = {
+  options.network-fabric.network = {
     enable = lib.mkDefault false;
     
     # Basic network settings
@@ -64,6 +64,7 @@ in {
     
     # Default gateway
     networking.defaultGateway = lib.mkIf cfg.defaultGateway.enable {
+      enable = true;
       address = cfg.defaultGateway.address;
       interface = cfg.defaultGateway.interface;
     };

@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 {
-  networking = {
+  network-fabric.network = {
     hostName = "rtr-sapinet";
     timeZone = "Europe/Paris";
     useDHCP = false;
