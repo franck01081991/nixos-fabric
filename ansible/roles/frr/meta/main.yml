@@ -3,7 +3,7 @@ galaxy_info:
   description: FRR configuration for NixOS fabric
   company: NixOS Fabric
   license: MIT
-  min_ansible_version: 2.15
+  min_ansible_version: "2.15"
   platforms:
     - name: NixOS
       versions:

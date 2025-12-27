@@ -2,22 +2,22 @@
 ---
 - name: Set FRR variables
   ansible.builtin.set_fact:
-    bgp_as: 65001
-    bgp_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
-    bgp_cluster_id: "10.254.0.11"
-    bgp_neighbors:
+    frr_bgp_as: 65001
+    frr_bgp_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
+    frr_bgp_cluster_id: "10.254.0.11"
+    frr_bgp_neighbors:
       - ip: "10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}"
         as: 65001
         ebgp_multihop: 5
-    bgp_networks:
+    frr_bgp_networks:
       - "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32"
-    bgp_evpn_enabled: "{{ inventory_hostname == 'rtr-noisy' }}"
-    ospf_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
-    ospf_networks:
+    frr_bgp_evpn_enabled: "{{ inventory_hostname == 'rtr-noisy' }}"
+    frr_ospf_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
+    frr_ospf_networks:
       - "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32"
       - "10.255.0.0/24"
-    ospf_area: 0
-    ospf_passive_interfaces:
+    frr_ospf_area: 0
+    frr_ospf_passive_interfaces:
       - "wgtransport"
 
 - name: Configure FRR
