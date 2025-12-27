@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 {
-  networking = {
+  network-fabric.networking = {
     hostName = "rtr-noisy";
     timeZone = "Europe/Paris";
     useDHCP = false;
