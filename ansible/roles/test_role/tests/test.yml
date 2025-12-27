@@ -1,0 +1,25 @@
+---
+# Test playbook for test_role role
+
+- name: Test test_role role
+  hosts: localhost
+  connection: local
+  become: true
+  
+  roles:
+    - test_role
+  
+  tasks:
+    - name: Verify test_role directories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: "{{ test_role_directories | default([]) }}"
+      when: test_role_directories is defined
+      register: dir_stats
+      
+    - name: Assert directories were created
+      ansible.builtin.assert:
+        that: item.stat.exists and item.stat.isdir
+        quiet: true
+      loop: "{{ dir_stats.results }}"
+      when: test_role_directories is defined

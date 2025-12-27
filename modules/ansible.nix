@@ -147,6 +147,49 @@ in {
       mkdir -p ${ansibleConfigDir}
       echo "${ansibleConfigContent}" > ${ansibleConfigDir}/ansible.cfg
       echo "${ansibleEnvContent}" > /etc/profile.d/ansible.sh
+      
+      # Generate Ansible variables from Nix configuration
+      cat > ${ansibleConfigDir}/nix_vars.yml <<EOF
+---
+# Nix-generated variables for Ansible
+nixos_fabric:
+  config_dir: "${ansibleConfigDir}"
+  ansible_dir: "${ansibleConfigDir}"
+  playbooks_dir: "${ansibleConfigDir}/playbooks"
+  roles_dir: "${ansibleConfigDir}/roles"
+  
+  # System information
+  system:
+    hostname: "{{ config.networking.hostName }}"
+    state_version: "25.11"
+    
+  # Network configuration
+  network:
+    interfaces: {{ config.networking.interfaces | to_json }}
+    
+  # Fabric-specific settings
+  fabric:
+    role: "{{ config.network-fabric.roles | default('unknown') }}"
+    environment: "{{ config.network-fabric.environment | default('production') }}"
+EOF
+      
+      # Create inventory directory and sample inventory
+      mkdir -p ${ansibleConfigDir}/inventory
+      cat > ${ansibleConfigDir}/inventory/sample.ini <<EOF
+[spine]
+rtr-sapinet ansible_host=192.168.1.1
+
+[leaf]
+rtr-noisy ansible_host=192.168.1.2
+
+[fabric:children]
+spine
+leaf
+
+[fabric:vars]
+ansible_user=root
+ansible_become=true
+EOF
     '';
     
     # Generate inventory if enabled
