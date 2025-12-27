@@ -1,126 +1,213 @@
-# NixOS Fabric Repository Structure
+# NixOS Fabric Repository Structure (Updated)
 
-This document provides an overview of the repository structure and organization.
+## Overview
+
+This document describes the **new organized structure** of the NixOS Fabric repository after the reorganization. The structure follows best practices for clarity, maintainability, and scalability.
 
 ## Repository Organization
 
 ```
 nixos-fabric/
-├── modules/                  # Core NixOS modules
-│   ├── security/             # Security module (organized)
+├── modules/                  # Core NixOS modules (REORGANIZED)
+│   ├── core/                 # Core modules
+│   │   ├── network-fabric.nix # Main fabric module
+│   │   ├── base.nix           # Base configuration
+│   │   └── lib.nix            # Utility functions
+│   │
+│   ├── networking/          # Networking modules
+│   │   ├── frr.nix           # FRR routing
+│   │   ├── wireguard.nix      # WireGuard VPN
+│   │   ├── networking.nix     # Network configuration
+│   │   └── roles/            # Network roles (spine, leaf, etc.)
+│   │
+│   ├── security/            # Security modules (CONSOLIDATED)
 │   │   ├── init.nix          # Main entry point
-│   │   ├── index.nix         # Module reference
-│   │   ├── default.nix       # Core security module
-│   │   └── README.md        # Documentation
-│   ├── networking.nix        # Network configuration
-│   ├── firewall.nix          # Firewall rules
-│   ├── ssh.nix               # SSH configuration
-│   ├── wireguard.nix         # WireGuard VPN
-│   ├── frr.nix               # FRR routing
-│   ├── ansible.nix           # Ansible integration
-│   ├── lib/                  # Utility functions
-│   └── network-fabric.nix    # Main fabric module
+│   │   ├── index.nix         # Module documentation
+│   │   ├── default.nix       # Core security
+│   │   ├── firewall.nix      # Firewall rules
+│   │   ├── hardening.nix     # System hardening
+│   │   ├── ssh.nix           # SSH security
+│   │   ├── nftables-advanced.nix # Advanced firewall
+│   │   ├── network-security.nix # Network security integration
+│   │   └── README.md        # Comprehensive documentation
+│   │
+│   ├── integration/         # Integration modules
+│   │   ├── ansible.nix       # Ansible integration
+│   │   └── monitoring.nix    # Monitoring integration
+│   │
+│   └── utils/               # Utility modules
+│       ├── lib/              # Library functions
+│       ├── ci-bootless.nix   # CI utilities
+│       └── dynamic.nix       # Dynamic configuration
+│
+├── hosts/                   # Host configurations (REORGANIZED)
+│   ├── production/          # Production environment
+│   │   ├── spine/           # Spine routers
+│   │   ├── leaf/            # Leaf routers
+│   │   └── edge/            # Edge routers
+│   │
+│   ├── staging/            # Staging environment
+│   ├── development/         # Development environment
+│   ├── roles/               # Host roles
+│   └── templates/           # Configuration templates
+│
+├── ansible/                 # Ansible configuration (SIMPLIFIED)
+│   ├── inventories/         # Inventory files
+│   │   ├── production/      # Production inventory
+│   │   ├── staging/         # Staging inventory
+│   │   └── development/     # Development inventory
+│   │
+│   ├── playbooks/          # Playbooks
+│   │   ├── deploy-fabric.yml # Main deployment
+│   │   ├── verify-fabric.yml # Verification
+│   │   └── roles/           # Role-specific playbooks
+│   │
+│   ├── roles/              # Ansible roles
+│   │   ├── common/          # Common configuration
+│   │   ├── frr/             # FRR routing
+│   │   ├── wireguard/       # WireGuard VPN
+│   │   └── security/        # Security configuration
+│   │
+│   ├── templates/          # Jinja2 templates
+│   ├── group_vars/          # Group variables
+│   ├── host_vars/           # Host variables
+│   ├── ansible.cfg          # Configuration
+│   ├── requirements.txt     # Requirements
+│   └── README.md            # Ansible documentation
 │
 ├── examples/                # Configuration examples
-│   ├── security-example.nix  # Security module example
-│   └── ...                   # Other examples
+│   ├── basic-fabric.nix     # Basic fabric example
+│   ├── secure-fabric.nix    # Secure fabric example
+│   ├── wireguard-bgp.nix    # WireGuard + BGP
+│   └── spine-leaf.nix       # Spine-leaf architecture
 │
-├── tests/                   # Test suite
-│   ├── modules/              # Module tests
-│   ├── test-security-module.nix  # Security tests
-│   ├── vm-test-config.nix    # VM test configuration
-│   └── run-tests.sh          # Test runner
+├── tests/                   # Tests (REORGANIZED)
+│   ├── unit/                # Unit tests
+│   │   ├── modules/         # Module tests
+│   │   └── utils/           # Utility tests
+│   │
+│   ├── integration/        # Integration tests
+│   │   ├── fabric/          # Fabric tests
+│   │   └── scenarios/       # Scenario tests
+│   │
+│   ├── vm/                 # VM tests
+│   │   ├── configurations/  # Test configs
+│   │   └── test-vm.nix      # Main VM test
+│   │
+│   ├── scripts/            # Test scripts
+│   └── README.md            # Test documentation
 │
-├── hosts/                   # Host configurations
-│   ├── host1/                # Host-specific configs
-│   ├── host2/                # Host-specific configs
-│   └── ...                   # Other hosts
-│
-├── docs/                    # Documentation
-│   ├── architecture/         # Architecture docs
-│   ├── deployment/           # Deployment guides
-│   └── development/          # Development docs
+├── docs/                    # Documentation (CONSOLIDATED)
+│   ├── architecture/        # Architecture docs
+│   ├── modules/             # Module documentation
+│   ├── deployment/          # Deployment guides
+│   ├── security/            # Security documentation
+│   ├── development/         # Development guides
+│   ├── examples/            # Documented examples
+│   └── README.md            # Documentation index
 │
 ├── scripts/                 # Utility scripts
-│   ├── deploy.sh             # Deployment scripts
-│   ├── setup.sh              # Setup scripts
-│   └── ...                   # Other scripts
+│   ├── deployment/          # Deployment scripts
+│   ├── development/         # Development scripts
+│   ├── testing/             # Test scripts
+│   └── README.md            # Script documentation
 │
 ├── external/                # External configurations
-│   └── ...                   # External host configs
+│   └── README.md            # External configs documentation
 │
 ├── .github/                 # GitHub configuration
-│   └── workflows/            # CI/CD workflows
+│   └── workflows/           # CI/CD workflows
 │
-├── STRUCTURE.md             # This file
-├── README.md                # Main README
-├── CONTRIBUTING.md          # Contribution guide
-├── LICENSE                  # License information
-└── flake.nix                # Nix flake configuration
+├── .vscode/                 # VSCode configuration
+│   └── settings.json        # Recommended settings
+│
+└── root files               # Root files
+    ├── README.md            # Main README
+    ├── STRUCTURE.md         # Structure documentation
+    ├── CONTRIBUTING.md      # Contribution guide
+    ├── LICENSE              # License
+    ├── flake.nix            # Nix flake
+    ├── flake.lock           # Flake lockfile
+    └── .gitignore           # Git ignore
 ```
 
-## Module Structure
+## Key Improvements
 
-### Security Module
+### 1. Module Organization
 
-The security module is organized as a submodule with clear entry points:
+**Before**: Modules mixed in root with inconsistent subdirectories
+**After**: Clear hierarchical structure by functional domain
+
+```
+modules/
+├── core/       # Foundation modules
+├── networking/ # All networking-related
+├── security/   # All security-related (consolidated)
+├── integration/# Integration with other tools
+└── utils/      # Utility functions
+```
+
+### 2. Security Consolidation
+
+**Before**: `security/` and `security-improved/` with duplication
+**After**: Single unified security module with comprehensive features
+
+### 3. Ansible Simplification
+
+**Before**: `.ansible/` and `ansible/` with duplication
+**After**: Single `ansible/` directory with standard structure
+
+### 4. Test Organization
+
+**Before**: Tests mixed with other files
+**After**: Clear separation by test type (unit, integration, vm)
+
+### 5. Documentation Centralization
+
+**Before**: Documentation scattered across repository
+**After**: Centralized in `docs/` with clear structure
+
+## Module Structure Details
+
+### Core Modules
+
+```
+modules/core/
+├── network-fabric.nix # Main fabric module
+├── base.nix           # Base system configuration
+└── lib.nix            # Core utility functions
+```
+
+### Networking Modules
+
+```
+modules/networking/
+├── frr.nix           # FRR routing daemon
+├── wireguard.nix      # WireGuard VPN
+├── networking.nix     # General networking
+└── roles/            # Network roles
+    ├── spine.nix     # Spine router role
+    ├── leaf.nix      # Leaf router role
+    ├── generic.nix   # Generic role
+    └── ...           # Other roles
+```
+
+### Security Modules
 
 ```
 modules/security/
-├── init.nix          # Main entry point (import this)
-├── index.nix         # Module documentation and reference
-├── default.nix       # Core security implementation
+├── init.nix          # Main entry point (imports all)
+├── index.nix         # Documentation index
+├── default.nix       # Core security module
+├── firewall.nix      # Firewall configuration
+├── hardening.nix     # System hardening
+├── ssh.nix           # SSH security
+├── nftables-advanced.nix # Advanced firewall rules
+├── network-security.nix # Network security integration
 └── README.md        # Comprehensive documentation
 ```
 
-**Usage:**
-```nix
-imports = [ ../modules/security/init.nix ];
-```
-
-### Network Fabric Module
-
-The main fabric module that ties everything together:
-
-```nix
-network-fabric = {
-  enable = true;
-  name = "production-fabric";
-  environment = "production";
-  
-  security = { ... };      # Security configuration
-  networking = { ... };    # Network configuration
-  wireguard = { ... };     # WireGuard VPN
-  frr = { ... };           # FRR routing
-  ansible = { ... };       # Ansible integration
-};
-```
-
 ## Configuration Hierarchy
-
-1. **Global Configuration** (`modules/network-fabric.nix`)
-   - Main fabric settings
-   - Module integration
-   - Default values
-
-2. **Feature Modules** (`modules/*.nix`)
-   - Security
-   - Networking
-   - WireGuard
-   - FRR
-   - Ansible
-
-3. **Host Configurations** (`hosts/*/`)
-   - Host-specific settings
-   - Environment variables
-   - Hardware configurations
-
-4. **Examples** (`examples/*.nix`)
-   - Reference configurations
-   - Best practices
-   - Testing templates
-
-## Import Conventions
 
 ### Recommended Import Order
 
@@ -129,113 +216,169 @@ network-fabric = {
 
 {
   imports = [
-    # 1. Core modules
-    ../modules/network-fabric.nix
+    # 1. Core modules (foundation)
+    ../modules/core/network-fabric.nix
+    ../modules/core/base.nix
     
-    # 2. Feature modules
-    ../modules/security/init.nix
-    ../modules/wireguard.nix
-    ../modules/frr.nix
+    # 2. Feature modules (domain-specific)
+    ../modules/networking/frr.nix
+    ../modules/networking/wireguard.nix
+    ../modules/security/init.nix  # Imports all security modules
     
-    # 3. Integration modules
-    ../modules/ansible.nix
+    # 3. Integration modules (cross-domain)
+    ../modules/integration/ansible.nix
     
-    # 4. Host-specific overrides
+    # 4. Utility modules (helpers)
+    ../modules/utils/lib.nix
+    
+    # 5. Host-specific overrides
     ./host-config.nix
     
-    # 5. Environment-specific settings
+    # 6. Environment-specific settings
     ./environment/${config.network-fabric.environment}.nix
   ];
-
-  # Configuration follows...
 }
 ```
 
-## Naming Conventions
+## Usage Examples
 
-### Module Files
-- `default.nix` - Main module implementation
-- `init.nix` - Entry point for submodules
-- `index.nix` - Documentation and reference
-- `README.md` - Comprehensive documentation
+### Basic Fabric Configuration
 
-### Configuration Options
-- `network-fabric.*` - Main fabric namespace
-- `network-fabric.security.*` - Security configurations
-- `network-fabric.networking.*` - Network configurations
-- `services.*` - Service configurations
-- `security.*` - System security settings
+```nix
+{ config, pkgs, ... }:
 
-### Variable Naming
-- `cfg` - Configuration object
-- `lib` - Nix library functions
-- `pkgs` - Nix packages
-- `options` - Module options
-- `config` - Final configuration
-
-## Documentation Standards
-
-### Module Documentation
-Each module should include:
-
-1. **Purpose** - What the module does
-2. **Features** - List of available features
-3. **Usage** - Basic and advanced examples
-4. **Options** - Configuration reference
-5. **Integration** - How it works with other modules
-
-### Code Comments
-- **Function-level** comments for major functions
-- **Section-level** comments for configuration blocks
-- **Inline comments** for complex logic
-- **TODO comments** for future improvements
-
-## Testing Structure
-
-### Test Organization
-
-```
-tests/
-├── modules/              # Individual module tests
-│   ├── security/          # Security module tests
-│   ├── networking/        # Networking tests
-│   └── ...                # Other module tests
-│
-├── integration/          # Integration tests
-│   ├── fabric-test.nix    # Full fabric tests
-│   └── ...                # Other integration tests
-│
-├── vm-test-config.nix    # VM test configuration
-├── test-security-module.nix  # Security test suite
-├── run-tests.sh          # Test runner script
-└── TESTING_SUMMARY.md    # Testing documentation
+{
+  imports = [
+    ../modules/core/network-fabric.nix
+    ../modules/networking/wireguard.nix
+    ../modules/security/init.nix
+  ];
+  
+  network-fabric = {
+    name = "my-fabric";
+    environment = "production";
+    
+    wireguard = {
+      enable = true;
+      peers = [
+        {
+          name = "peer1";
+          publicKey = "...";
+          allowedIPs = [ "10.0.0.2/32" ];
+        }
+      ];
+    };
+    
+    security = {
+      enable = true;
+      firewall = {
+        allowedTCP = [ 22 51820 ];
+      };
+    };
+  };
+}
 ```
 
-### Test Conventions
-- **Unit Tests** - Test individual modules
-- **Integration Tests** - Test module interactions
-- **VM Tests** - Test in real NixOS environment
-- **Documentation Tests** - Verify examples work
+### Advanced Configuration with Roles
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  imports = [
+    ../modules/core/network-fabric.nix
+    ../modules/networking/roles/spine.nix
+    ../modules/security/init.nix
+  ];
+  
+  network-fabric = {
+    name = "spine-router";
+    role = "spine";
+    
+    frr = {
+      enable = true;
+      bgp = {
+        as = 65000;
+        neighbors = {
+          leaf1 = { ip = "10.255.0.1"; as = 65001; };
+        };
+      };
+    };
+    
+    security = {
+      enable = true;
+      ssh = {
+        port = 2222;
+        passwordAuthentication = false;
+      };
+    };
+  };
+}
+```
 
 ## Best Practices
 
 ### Module Development
-1. **Single Responsibility** - Each module should do one thing well
-2. **Clear Interfaces** - Well-defined options and outputs
-3. **Sensible Defaults** - Secure and functional defaults
-4. **Comprehensive Documentation** - Complete usage examples
-5. **Backward Compatibility** - Maintain compatibility when possible
+
+1. **Single Responsibility**: Each module should do one thing well
+2. **Clear Interfaces**: Well-defined options and outputs
+3. **Sensible Defaults**: Secure and functional defaults
+4. **Comprehensive Documentation**: Complete usage examples
+5. **Backward Compatibility**: Maintain compatibility when possible
 
 ### Configuration Management
-1. **Use Imports** - Import modules rather than copying code
-2. **Layer Configurations** - Separate global, host, and environment configs
-3. **Enable Features Explicitly** - Opt-in rather than opt-out
-4. **Use Descriptive Names** - Clear and meaningful option names
-5. **Document Assumptions** - Explain configuration requirements
+
+1. **Use Imports**: Import modules rather than copying code
+2. **Layer Configurations**: Separate global, host, and environment configs
+3. **Enable Features Explicitly**: Opt-in rather than opt-out
+4. **Use Descriptive Names**: Clear and meaningful option names
+5. **Document Assumptions**: Explain configuration requirements
+
+### File Organization
+
+1. **Keep related files together**: Group by functional domain
+2. **Use consistent naming**: Follow established patterns
+3. **Document structure**: Keep documentation updated
+4. **Avoid duplication**: Reuse existing modules
+5. **Keep it simple**: Prefer simplicity over complexity
+
+## Migration Guide
+
+### From Old Structure
+
+If migrating from the old structure:
+
+1. **Update import paths** to reflect new organization
+2. **Consolidate security configurations** into new security module
+3. **Move Ansible configurations** to new structure
+4. **Update test references** to new locations
+5. **Review documentation** for accuracy
+
+### Example Migration
+
+**Old import**:
+```nix
+imports = [
+  ../modules/network-fabric.nix
+  ../modules/security/default.nix
+  ../modules/security/firewall.nix
+  ../modules/wireguard.nix
+];
+```
+
+**New import**:
+```nix
+imports = [
+  ../modules/core/network-fabric.nix
+  ../modules/security/init.nix  # Imports all security modules
+  ../modules/networking/wireguard.nix
+];
+```
 
 ## Contribution Guidelines
 
 See `CONTRIBUTING.md` for detailed contribution guidelines including:
+
 - Code style standards
 - Commit message conventions
 - Pull request process
@@ -245,3 +388,18 @@ See `CONTRIBUTING.md` for detailed contribution guidelines including:
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
+
+## Support
+
+For questions about the new structure:
+
+- **GitHub Issues**: For structure-related questions
+- **Discussions**: For general architecture discussions
+- **Documentation**: Check updated documentation in `docs/`
+
+---
+
+**Last Updated**: 2024-07-25
+**Structure Version**: 2.0 (Organized)
+**Maintainer**: Franck
+**License**: MIT
