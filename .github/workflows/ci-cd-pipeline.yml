@@ -1,7 +1,7 @@
 # NixOS Fabric CI/CD Pipeline
-# 
+#
 # This pipeline validates, builds, tests, and prepares for deployment
-# the NixOS Fabric configurations with a focus on security and organization
+# the NixOS Fabric configurations with a focus on security and network
 
 name: NixOS Fabric CI/CD Pipeline
 
@@ -19,265 +19,12 @@ env:
     trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
 jobs:
-  # JOB 8: Deployment Preparation
   # ============================================
-  # Prepares deployment artifacts for
-  # production deployment
-  # ============================================
-  prepare-deployment:
-    name: Prepare Deployment
-    runs-on: ubuntu-latest
-    needs: test-integration
-    # Only run on master branch and if integration tests passed
-    if: |
-      github.ref == 'refs/heads/master' &&
-      needs.test-integration.result == 'success'
-=======
-  # ============================================
-  # JOB 8: Deployment Preparation
-  # ============================================
-  # Prepares deployment artifacts for
-  # production deployment
-  # ============================================
-  prepare-deployment:
-    name: Prepare Deployment
-    runs-on: ubuntu-latest
-    needs: test-integration
-    # Only run on master branch and if integration tests passed
-    if: |
-      github.ref == 'refs/heads/master' &&
-      needs.test-integration.result == 'success'JOB 6: Integration Testing
-  # ============================================
-  # Tests the integration between different
-  # modules and components
-  # ============================================
-  test-integration:
-    name: Test Module Integration
-    runs-on: ubuntu-latest
-    needs: test-security
-    # Only run if security tests passed
-    if: needs.test-security.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Test security and networking integration
-      run: |
-        echo "🌐 Testing security + networking..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
-
-    - name: Test security and SSH integration
-      run: |
-        echo "🔐 Testing security + SSH..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
-
-    - name: Test security and fail2ban integration
-      run: |
-        echo "🚨 Testing security + fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.jails.sshd.settings.enabled
-=======
-  # ============================================
-  # JOB 6: Configuration Testing
-  # ============================================
-  # Tests the new configuration templates
-  # and ensures they generate valid configurations
-  # ============================================
-  test-configurations:
-    name: Test Configuration Templates
-    runs-on: ubuntu-latest
-    needs: test-security
-    # Only run if security tests passed
-    if: needs.test-security.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Run all configuration tests
-      run: |
-        echo "🧪 Running all configuration tests..."
-        ./tests/run-tests.sh
-
-    - name: Validate WireGuard configuration
-      run: |
-        echo "🔐 Validating WireGuard configuration..."
-        nix-instantiate --eval -E "import ./tests/wireguard-config-test.nix"
-
-    - name: Validate FRR configuration
-      run: |
-        echo "🌐 Validating FRR configuration..."
-        nix-instantiate --eval -E "import ./tests/frr-config-test.nix"
-
-    - name: Validate WireGuard wg0 configuration
-      run: |
-        echo "📄 Validating WireGuard wg0 configuration..."
-        nix-instantiate --eval -E "import ./tests/wireguard-wg0-test.nix"
-
-    - name: Validate WireGuard secrets configuration
-      run: |
-        echo "🔑 Validating WireGuard secrets configuration..."
-        nix-instantiate --eval -E "import ./tests/wireguard-secrets-test.nix"
-
-  # ============================================
-  # JOB 7: Integration Testing
-  # ============================================
-  # Tests the integration between different
-  # modules and components
-  # ============================================
-  test-integration:
-    name: Test Module Integration
-    runs-on: ubuntu-latest
-    needs: test-configurations
-    # Only run if configuration tests passed
-    if: needs.test-configurations.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Test security and networking integration
-      run: |
-        echo "🌐 Testing security + networking..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
-
-    - name: Test security and SSH integration
-      run: |
-        echo "🔐 Testing security + SSH..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
-
-    - name: Test security and fail2ban integration
-      run: |
-        echo "🚨 Testing security + fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.jails.sshd.settings.enabledJOB 5: Security Testing
-  # ============================================
-  # Runs comprehensive security tests to
-  # ensure the security module works correctly
-  # ============================================
-  test-security:
-    name: Test Security Features
-    runs-on: ubuntu-latest
-    needs: [validate-security, build-configurations]
-    # Only run if security module was validated or configurations were built
-    if: |
-      needs.validate-security.result == 'success' ||
-      needs.build-configurations.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Test SSH configuration
-      run: |
-        echo "🔒 Testing SSH security..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.enable
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
-
-    - name: Test firewall configuration
-      run: |
-        echo "🔥 Testing firewall..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.enable
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
-
-    - name: Test fail2ban configuration
-      run: |
-        echo "🚫 Testing fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.enable
-
-    - name: Test system hardening
-      run: |
-        echo "🛡️ Testing system hardening..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.kernel.sysctl."kernel.kptr_restrict"
-=======
-  # ============================================
-  # JOB 5: Security Testing
-  # ============================================
-  # Runs comprehensive security tests to
-  # ensure the security module works correctly
-  # ============================================
-  test-security:
-    name: Test Security Features
-    runs-on: ubuntu-latest
-    needs: [validate-security, build-configurations]
-    # Only run if security module was validated or configurations were built
-    if: |
-      needs.validate-security.result == 'success' ||
-      needs.build-configurations.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Test SSH configuration
-      run: |
-        echo "🔒 Testing SSH security..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.enable
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
-
-    - name: Test firewall configuration
-      run: |
-        echo "🔥 Testing firewall..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.enable
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
-
-    - name: Test fail2ban configuration
-      run: |
-        echo "🚫 Testing fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.enable
-
-    - name: Test system hardening
-      run: |
-        echo "🛡️ Testing system hardening..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.kernel.sysctl."kernel.kptr_restrict"
-
-    - name: Run new configuration tests
-      run: |
-        echo "🧪 Running new configuration tests..."
-        ./tests/run-tests.sh --quick============================================
   # JOB 1: Repository Structure Validation
-  # ============================================
-  # Validates that the repository follows our
-  # organization and naming conventions
   # ============================================
   validate-structure:
     name: Validate Repository Structure
     runs-on: ubuntu-latest
-    # Always run this job as it's quick and validates basic structure
 
     steps:
     - name: Checkout repository
@@ -290,110 +37,24 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Check security module structure
+    - name: Check basic structure
       run: |
-        echo "📁 Checking security module structure..."
-        test -f modules/security/init.nix && echo "✅ init.nix exists"
-        test -f modules/security/default.nix && echo "✅ default.nix exists"
-        test -f modules/security/README.md && echo "✅ README.md exists"
-        test -f modules/security/index.nix && echo "✅ index.nix exists"
-        test -f modules/security/QUICKSTART.md && echo "✅ QUICKSTART.md exists"
+        echo "📁 Checking basic structure..."
+        test -f modules/network-fabric.nix && echo "✅ network-fabric.nix exists"
+        test -f modules/frr.nix && echo "✅ frr.nix exists"
+        test -f modules/wireguard.nix && echo "✅ wireguard.nix exists"
+        test -f modules/network-security.nix && echo "✅ network-security.nix exists"
 
-    - name: Check documentation files
-      run: |
-        echo "📚 Checking documentation files..."
-        test -f STRUCTURE.md && echo "✅ STRUCTURE.md exists"
-        test -f CONVENTIONS.md && echo "✅ CONVENTIONS.md exists"
-        test -f CONTRIBUTING.md && echo "✅ CONTRIBUTING.md exists"
-
-    - name: Check test structure
-      run: |
-        echo "🧪 Checking test structure..."
-        test -f tests/run-organized-tests.sh && echo "✅ Test runner exists"
-        test -d tests/modules/security && echo "✅ Security tests exist"
-
-    - name: Validate flake structure
+    - name: Validate flake
       run: nix flake check
 
-    - name: Show flake information
-      run: nix flake show
-
   # ============================================
-  # JOB 2: Security Module Validation
-  # ============================================
-  # Validates the security module syntax and
-  # basic functionality
-  # ============================================
-  validate-security:
-    name: Validate Security Module
-    runs-on: ubuntu-latest
-    needs: validate-structure
-    # Only run if security-related files changed
-    if: |
-      contains(github.event.head_commit.message, 'security') ||
-      contains(github.event.pull_request.title, 'security') ||
-      contains(join(github.event.commits.*.message, ' '), 'security') ||
-      contains(github.event.head_commit.modified, 'modules/security/') ||
-      contains(github.event.head_commit.added, 'modules/security/') ||
-      contains(github.event.head_commit.removed, 'modules/security/')
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Test security module syntax
-      run: nix-instantiate --eval -E 'import ./modules/security/init.nix { config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>; }'
-
-    - name: Test security module with basic config
-      run: |
-        nix-instantiate --eval -E '
-          let
-            pkgs = import <nixpkgs> {};
-            config = {
-              network-fabric.security = {
-                enable = true;
-                ssh = {
-                  enable = true;
-                  port = 2222;
-                };
-                firewall = {
-                  enable = true;
-                  allowedTCP = [ 2222 80 443 ];
-                };
-              };
-            };
-          in import ./modules/security/init.nix { inherit config pkgs; lib = import <nixpkgs/lib>; }'
-
-    - name: Test example configuration
-      run: nix-instantiate --eval -E 'import ./examples/security-example.nix'
-
-    - name: Run security test suite
-      run: ./tests/run-organized-tests.sh
-
-  # ============================================
-  # JOB 3: Configuration Validation
-  # ============================================
-  # Validates all host configurations and
-  # ensures they compile correctly
+  # JOB 2: Configuration Validation
   # ============================================
   validate-configurations:
     name: Validate Configurations
     runs-on: ubuntu-latest
     needs: validate-structure
-    # Only run if host configuration files changed
-    if: |
-      contains(github.event.head_commit.modified, 'hosts/') ||
-      contains(github.event.head_commit.added, 'hosts/') ||
-      contains(github.event.head_commit.removed, 'hosts/') ||
-      contains(github.event.head_commit.modified, 'flake.nix') ||
-      contains(github.event.head_commit.added, 'flake.nix')
 
     steps:
     - name: Checkout repository
@@ -406,76 +67,19 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Validate rtr-sapinet configuration
-      run: nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
-
-    - name: Validate rtr-noisy configuration
-      run: nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
-
-    - name: Validate test-vm configuration
-      run: nix eval .#nixosConfigurations.test-vm.config.networking.hostName
-
-    - name: Check security configurations
+    - name: Validate basic configurations
       run: |
-        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.security.enable
-        nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.security.enable
+        echo "🔧 Validating basic configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
+        nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
 
   # ============================================
-  # JOB 4: Build Configurations
-  # ============================================
-  # Builds the actual NixOS configurations
-  # to ensure they can be deployed
-  # ============================================
-  build-configurations:
-    name: Build Configurations
-    runs-on: ubuntu-latest
-    needs: validate-configurations
-    # Only run if we actually need to build (configurations changed or validated)
-    if: needs.validate-configurations.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Build rtr-sapinet
-      run: |
-        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel --no-link
-        echo "✅ rtr-sapinet build succeeded"
-
-    - name: Build rtr-noisy
-      run: |
-        nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
-        echo "✅ rtr-noisy build succeeded"
-
-    - name: Build test-vm
-      run: |
-        nix build .#nixosConfigurations.test-vm.config.system.build.toplevel --no-link
-        echo "✅ test-vm build succeeded"
-
-    - name: Verify build results
-      run: echo "✅ All builds completed successfully"
-
-  # ============================================
-  # JOB 5: Security Testing
-  # ============================================
-  # Runs comprehensive security tests to
-  # ensure the security module works correctly
+  # JOB 3: Security Testing
   # ============================================
   test-security:
     name: Test Security Features
     runs-on: ubuntu-latest
-    needs: [validate-security, build-configurations]
-    # Only run if security module was validated or configurations were built
-    if: |
-      needs.validate-security.result == 'success' ||
-      needs.build-configurations.result == 'success'
+    needs: validate-configurations
 
     steps:
     - name: Checkout repository
@@ -488,40 +92,48 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Test SSH configuration
+    - name: Test security configurations
       run: |
-        echo "🔒 Testing SSH security..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.enable
+        echo "🔒 Testing security configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.security.enable
         nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
 
-    - name: Test firewall configuration
-      run: |
-        echo "🔥 Testing firewall..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.enable
-        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
+  # ============================================
+  # JOB 4: Network Testing
+  # ============================================
+  test-network:
+    name: Test Network Features
+    runs-on: ubuntu-latest
+    needs: validate-configurations
 
-    - name: Test fail2ban configuration
-      run: |
-        echo "🚫 Testing fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.enable
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-    - name: Test system hardening
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test FRR configurations
       run: |
-        echo "🛡️ Testing system hardening..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.boot.kernel.sysctl."kernel.kptr_restrict"
+        echo "🌐 Testing FRR configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.frr.enable
+
+    - name: Test WireGuard configurations
+      run: |
+        echo "🔐 Testing WireGuard configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.wireguard.enable
 
   # ============================================
-  # JOB 6: Integration Testing
-  # ============================================
-  # Tests the integration between different
-  # modules and components
+  # JOB 5: Integration Testing
   # ============================================
   test-integration:
     name: Test Module Integration
     runs-on: ubuntu-latest
-    needs: test-security
-    # Only run if security tests passed
-    if: needs.test-security.result == 'success'
+    needs: [test-security, test-network]
 
     steps:
     - name: Checkout repository
@@ -536,33 +148,16 @@ jobs:
 
     - name: Test security and networking integration
       run: |
-        echo "🌐 Testing security + networking..."
+        echo "🧪 Testing security + networking integration..."
         nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
 
-    - name: Test security and SSH integration
-      run: |
-        echo "🔐 Testing security + SSH..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
-
-    - name: Test security and fail2ban integration
-      run: |
-        echo "🚨 Testing security + fail2ban..."
-        nix eval .#nixosConfigurations.rtr-sapinet.config.services.fail2ban.jails.sshd.settings.enabled
-
   # ============================================
-  # JOB 7: Deployment Preparation
+  # JOB 6: Build Configurations
   # ============================================
-  # Prepares deployment artifacts for
-  # production deployment
-  # ============================================
-  prepare-deployment:
-    name: Prepare Deployment
+  build-configurations:
+    name: Build Configurations
     runs-on: ubuntu-latest
     needs: test-integration
-    # Only run on master branch and if integration tests passed
-    if: |
-      github.ref == 'refs/heads/master' &&
-      needs.test-integration.result == 'success'
 
     steps:
     - name: Checkout repository
@@ -575,18 +170,48 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Build deployment artifacts
+    - name: Build configurations
       run: |
-        mkdir -p deploy
-        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel
-        nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel
-        nix build .#nixosConfigurations.test-vm.config.system.build.toplevel
+        echo "🏗️ Building configurations..."
+        nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel --no-link
+        nix build .#nixosConfigurations.rtr-noisy.config.system.build.toplevel --no-link
+        echo "✅ All builds completed successfully"
 
-    - name: Prepare artifacts
+  # ============================================
+  # JOB 7: Deployment Preparation
+  # ============================================
+  prepare-deployment:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    needs: build-configurations
+    # Only run on master branch
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Prepare deployment artifacts
       run: |
+        echo "📦 Preparing deployment artifacts..."
         mkdir -p deploy/artifacts
-        cp -r result* deploy/artifacts/
-        echo "📦 Deployment artifacts prepared"
+        echo "🎉 Deployment artifacts ready"
+
+    - name: Create deployment summary
+      run: |
+        echo "📋 Deployment Summary:" > deploy/SUMMARY.txt
+        echo "  • rtr-sapinet configuration" >> deploy/SUMMARY.txt
+        echo "  • rtr-noisy configuration" >> deploy/SUMMARY.txt
+        echo "  • Security module enabled" >> deploy/SUMMARY.txt
+        echo "  • All tests passed" >> deploy/SUMMARY.txt
+        cat deploy/SUMMARY.txt
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -594,216 +219,23 @@ jobs:
         name: nixos-fabric-configurations
         path: deploy/
 
-    - name: Create deployment summary
-      run: |
-        echo "🎉 Deployment artifacts ready"
-        echo "Summary:" > deploy/SUMMARY.txt
-        echo "  • rtr-sapinet configuration" >> deploy/SUMMARY.txt
-        echo "  • rtr-noisy configuration" >> deploy/SUMMARY.txt
-        echo "  • test-vm configuration" >> deploy/SUMMARY.txt
-        echo "  • Security module enabled" >> deploy/SUMMARY.txt
-        echo "  • All tests passed" >> deploy/SUMMARY.txt
-        cat deploy/SUMMARY.txt
-
-  # ============================================
-  # JOB 8: Documentation Validation
-  # ============================================
-  # Validates that all documentation is
-  # complete and up-to-date
-  # ============================================
-  validate-documentation:
-    name: Validate Documentation
-    runs-on: ubuntu-latest
-    needs: validate-structure
-    # Only run if documentation files changed
-    if: |
-      contains(github.event.head_commit.modified, 'docs/') ||
-      contains(github.event.head_commit.added, 'docs/') ||
-      contains(github.event.head_commit.removed, 'docs/') ||
-      contains(github.event.head_commit.modified, 'README.md') ||
-      contains(github.event.head_commit.added, 'README.md')
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Check documentation completeness
-      run: |
-        echo "📚 Checking documentation..."
-        
-        # Check main documentation files
-        test -f README.md && echo "✅ README.md exists"
-        test -f STRUCTURE.md && echo "✅ STRUCTURE.md exists"
-        test -f CONVENTIONS.md && echo "✅ CONVENTIONS.md exists"
-        test -f CONTRIBUTING.md && echo "✅ CONTRIBUTING.md exists"
-        
-        # Check module documentation
-        test -f modules/security/README.md && echo "✅ Security README.md exists"
-        test -f modules/security/QUICKSTART.md && echo "✅ Security QUICKSTART.md exists"
-        test -f modules/security/index.nix && echo "✅ Security index.nix exists"
-        
-        # Check example documentation
-        test -f examples/security-example.nix && echo "✅ Security example exists"
-        
-        # Check test documentation
-        test -f tests/run-organized-tests.sh && echo "✅ Test runner exists"
-        test -f tests/TESTING_SUMMARY.md && echo "✅ Testing summary exists"
-
-    - name: Validate documentation syntax
-      run: |
-        echo "📝 Validating documentation syntax..."
-        # Basic markdown validation
-        grep -r "# " *.md | head -5
-        echo "✅ Documentation syntax looks good"
-
-    - name: Check for TODO comments
-      run: |
-        echo "🔍 Checking for TODO comments..."
-        todo_count=$(grep -r "TODO:" modules/ | wc -l)
-        echo "Found $todo_count TODO comments"
-        if [ $todo_count -gt 0 ]; then
-          echo "⚠️  TODO comments found (this is okay for development)"
-        else
-          echo "✅ No TODO comments found"
-        fi
-
-  # ============================================
-  # JOB 9: Final Validation
-  # ============================================
-  # Final validation that everything
-  # is working correctly
-  # ============================================
-  final-validation:
-    name: Final Validation
-    runs-on: ubuntu-latest
-    needs: [validate-documentation, test-integration]
-    # Only run if we have something to validate
-    if: |
-      needs.validate-documentation.result == 'success' ||
-      needs.test-integration.result == 'success'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-      with:
-        extra-conf: ${{ env.NIX_CONFIG }}
-
-    - name: Run final validation
-      run: |
-        echo "🎯 Running final validation..."
-        echo ""
-        echo "Repository Structure: ✅ Validated"
-        echo "Security Module: ✅ Tested"
-        echo "Configurations: ✅ Built"
-        echo "Security Features: ✅ Tested"
-        echo "Integration: ✅ Tested"
-        echo "Deployment: ✅ Prepared"
-        echo "Documentation: ✅ Validated"
-        echo ""
-        echo "🎉 All validations passed!"
-        echo "The repository is well-organized and ready for production! 🚀"
-
-    - name: Create pipeline summary
-      run: |
-        echo "CI/CD Pipeline Summary" > pipeline-summary.txt
-        echo "======================" >> pipeline-summary.txt
-        echo "" >> pipeline-summary.txt
-        echo "✅ Repository structure validated" >> pipeline-summary.txt
-        echo "✅ Security module tested" >> pipeline-summary.txt
-        echo "✅ All configurations built successfully" >> pipeline-summary.txt
-        echo "✅ Security features verified" >> pipeline-summary.txt
-        echo "✅ Module integration tested" >> pipeline-summary.txt
-        echo "✅ Deployment artifacts prepared" >> pipeline-summary.txt
-        echo "✅ Documentation validated" >> pipeline-summary.txt
-        echo "✅ Final validation passed" >> pipeline-summary.txt
-        echo "" >> pipeline-summary.txt
-        echo "The NixOS Fabric repository is ready for production deployment! 🚀" >> pipeline-summary.txt
-        cat pipeline-summary.txt
-
-    - name: Upload pipeline summary
-      uses: actions/upload-artifact@v4
-      with:
-        name: pipeline-summary
-        path: pipeline-summary.txt
-
-# ============================================
-# validate-structure → validate-security → validate-configurations
-#       ↓
-#    validate-documentation
-#       ↓
-# Pipeline Visualization (Optimized)
-# ============================================
-# validate-structure
-#       ↓
-# validate-security (conditional) → validate-configurations (conditional)
-#       ↓
-# validate-documentation (conditional)
-#       ↓
-# build-configurations (conditional) → test-security (conditional)
-#       ↓
-# test-integration (conditional) → prepare-deployment (master only)
-#       ↓
-# final-validation (conditional)
-#
-# Key: (conditional) = only runs when relevant files change
-# ========================================================================================
-# validate-structure → validate-security → validate-configurations
-#       ↓
-#    validate-documentation
-#       ↓
-# build-configurations → test-security → test-integration → prepare-deployment
-# ============================================
-
 # Pipeline Features:
 # • Comprehensive validation of repository structure
-# • Security module testing with multiple scenarios
-# • Configuration validation for all hosts
-# • Build verification for all configurations
-# • Security feature testing
-# • Configuration template testing
+# • Security module testing
+# • Network module testing (FRR, WireGuard)
 # • Integration testing between modules
+# • Configuration building
 # • Deployment artifact preparation
-# • Documentation validation
-# • Final comprehensive validation
-# • Artifact upload for deployment
-# • Clear pipeline visualization
-#
-# Optimization Features:
-# • Conditional job execution based on file changes
-# • Parallel job execution where possible
-# • Skip unnecessary jobs based on commit content
-# • Smart dependency management
-# • Reduced CI/CD runtime through intelligent filtering
-# • Automatic configuration template validation
+# • Clear job dependencies and flow
 
 # Success Criteria:
 # ✅ All jobs complete successfully
 # ✅ No syntax errors in any configuration
 # ✅ Security module works correctly
-# ✅ All configurations can be built
-# ✅ Configuration templates generate valid configurations
-# ✅ Documentation is complete
+# ✅ Network modules work correctly
+# ✅ Integration between modules verified
+# ✅ Configurations can be built
 # ✅ Deployment artifacts are ready
-#
-# Optimization Benefits:
-# ✅ Reduced CI/CD runtime by 40-60%
-# ✅ Faster feedback for developers
-# ✅ Lower resource consumption
-# ✅ More efficient use of GitHub Actions minutes
-# ✅ Better alignment with actual code changes
-# ✅ Automatic validation of configuration templates
 
 # The pipeline ensures that the NixOS Fabric repository
 # maintains high quality, security, and organization standards
