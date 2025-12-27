@@ -6,8 +6,8 @@
 { pkgs ? import <nixpkgs> {}, lib ? import <nixpkgs/lib> }:
 
 let
-  # Import the security module
-  securityModule = import ../../../modules/security/init.nix;
+  # Import the security module with required arguments
+  securityModule = import ../../../modules/security/init.nix { inherit lib; };
   
   # Test configuration 1: Minimal configuration
   minimalConfig = {
