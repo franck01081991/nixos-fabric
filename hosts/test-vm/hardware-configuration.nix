@@ -3,7 +3,7 @@
 # This configuration is used for testing purposes only
 # and provides basic hardware settings for the test environment.
 
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   # Basic hardware configuration
@@ -26,7 +26,7 @@
   # Network configuration
   networking = {
     hostId = "00000000";
-    useDHCP = true;
+    useDHCP = lib.mkForce true;
   };
   
   # Basic system settings

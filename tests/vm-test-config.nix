@@ -1,17 +1,17 @@
 # Virtual Machine Test Configuration
 # 
-# This configuration is designed for testing the security-improved module
+# This configuration is designed for testing the security module
 # in a real NixOS environment using a virtual machine.
 
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
-    ../modules/security-improved.nix
+    ../modules/security/init.nix
   ];
 
   # Basic system configuration
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
   
   # Network configuration
   networking = {
@@ -102,6 +102,10 @@
   services = {
     nginx.enable = true;
     fail2ban.enable = true;
+  };
+  
+  # Security services
+  security = {
     apparmor.enable = true;
     auditd.enable = true;
   };

@@ -135,16 +135,22 @@ in {
     };
     
     # Security settings
+    # Security configuration is handled by the comprehensive security.nix module
+    # which provides SSH hardening, firewall, fail2ban, AppArmor, auditd, 
+    # secret management, security updates, and system hardening features.
     security = mkOption {
-      type = submodule {
-        options = {
-          sshPort = mkDefault defaultFabricConfig.security.sshPort;
-          fail2banEnable = mkDefault defaultFabricConfig.security.fail2banEnable;
-          firewallEnable = mkDefault defaultFabricConfig.security.firewallEnable;
+      type = attrs;
+      default = {
+        enable = false;
+        ssh = {
+          enable = true;
+          port = 22;
+        };
+        firewall = {
+          enable = true;
         };
       };
-      default = defaultFabricConfig.security;
-      description = "Security configuration";
+      description = "Comprehensive security configuration";
     };
   };
   

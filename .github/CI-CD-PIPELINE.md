@@ -1,333 +1,313 @@
-# NixOS Fabric CI/CD Pipeline
+# NixOS Fabric CI/CD Pipeline Documentation
 
-This document explains the CI/CD pipeline setup for the NixOS Fabric project.
+## Overview
 
-## 📂 Pipeline Overview
+The NixOS Fabric CI/CD pipeline is a comprehensive GitHub Actions workflow that validates, builds, tests, and prepares the NixOS Fabric configurations for deployment. It ensures code quality, security, and organization standards are maintained throughout the development process.
 
-The pipeline consists of 4 main workflows:
+## Pipeline Structure
 
-1. **Validate** - Syntax and basic configuration validation
-2. **Build** - Full configuration builds
-3. **Test** - Comprehensive configuration testing
-4. **Deploy** - Deployment workflow (manual trigger)
+```mermaid
+graph TD
+    A[Validate Structure] --> B[Validate Security]
+    B --> C[Validate Configurations]
+    C --> D[Build Configurations]
+    D --> E[Test Security]
+    E --> F[Test Integration]
+    F --> G[Prepare Deployment]
+    A --> H[Validate Documentation]
+    H --> I[Final Validation]
+    G --> I
+```
 
-## 🚀 Workflow Details
+## Jobs Description
 
-### 1. Validate Workflow (`validate.yml`)
+### 1. Validate Repository Structure
 
-**Trigger**: Push/Pull Request to master branch
+**Purpose**: Ensures the repository follows our organization and naming conventions.
 
-**Purpose**: Quick validation of Nix configurations
+**Checks**:
+- Security module structure (`init.nix`, `default.nix`, `README.md`, etc.)
+- Documentation files (`STRUCTURE.md`, `CONVENTIONS.md`, `CONTRIBUTING.md`)
+- Test structure (`tests/run-organized-tests.sh`, `tests/modules/security/`)
+- Flake structure validation
 
-**Steps**:
-- Checkout repository with submodules
-- Install Nix with cachix support
-- Validate flake structure
-- Test basic configuration evaluation
-- Check for syntax errors
+**Output**: Confirms repository organization is correct.
 
-**Duration**: ~2-3 minutes
+### 2. Validate Security Module
 
-### 2. Build Workflow (`build.yml`)
-
-**Trigger**: 
-- Push/Pull Request to master
-- After successful validation
-
-**Purpose**: Full build of NixOS configurations
-
-**Steps**:
-- Build vm-sapinet configuration
-- Build rtr-noisy configuration
-- Cache build results
-- List build artifacts
-
-**Duration**: ~5-10 minutes
-
-### 3. Test Workflow (`test.yml`)
-
-**Trigger**:
-- Push/Pull Request to master
-- Daily at midnight (cron)
-
-**Purpose**: Comprehensive configuration testing
+**Purpose**: Validates the security module syntax and basic functionality.
 
 **Tests**:
-- WireGuard configuration
-- FRR (BGP/OSPF) configuration
-- Networking interfaces
-- SSH configuration
-- Firewall rules
-- Undefined variables check
+- Security module syntax validation
+- Basic configuration scenarios
+- Example configuration validation
+- Security test suite execution
 
-**Duration**: ~3-5 minutes
+**Output**: Confirms security module works correctly.
 
-### 4. Deploy Workflow (`deploy.yml`)
+### 3. Validate Configurations
 
-**Trigger**: Manual (workflow_dispatch)
+**Purpose**: Validates all host configurations compile correctly.
 
-**Purpose**: Prepare deployment artifacts
+**Checks**:
+- `rtr-sapinet` configuration
+- `rtr-noisy` configuration
+- `test-vm` configuration
+- Security module enablement
 
-**Inputs**:
-- Target: vm-sapinet, rtr-noisy, or all
-- Environment: production, staging, or development
+**Output**: Confirms all configurations are syntactically correct.
 
-**Steps**:
-- Build selected configuration
-- Prepare deployment artifacts
-- Upload artifacts
-- Notification
+### 4. Build Configurations
 
-**Duration**: ~5-15 minutes (depending on target)
+**Purpose**: Builds actual NixOS configurations to ensure deployability.
 
-## 🔧 Setup Instructions
+**Builds**:
+- `rtr-sapinet` system configuration
+- `rtr-noisy` system configuration
+- `test-vm` system configuration
 
-### Prerequisites
+**Output**: Confirms all configurations can be built successfully.
 
-1. **Nix Version**: Nix 2.18.0 or higher is required
-   - Check your version: `nix --version`
-   - Upgrade if needed: `nix upgrade-nix`
+### 5. Test Security Features
 
-2. **GitHub Secrets** (optional but recommended):
-   - `CACHIX_AUTH_TOKEN`: For Cachix caching
-   - `SSH_PRIVATE_KEY`: For deployment (if automated)
+**Purpose**: Runs comprehensive security tests.
 
-2. **Cachix Cache** (recommended):
-   ```bash
-   # Create cachix cache
-   cachix create nixos-fabric
-   
-   # Add to your system
-   cachix use nixos-fabric
-   
-   # Add auth token to GitHub secrets
-   cachix token
-   ```
+**Tests**:
+- SSH configuration (port, authentication, etc.)
+- Firewall configuration (rules, ports, etc.)
+- Fail2ban configuration (jails, bans, etc.)
+- System hardening (kernel parameters, etc.)
 
-### Badges
+**Output**: Confirms security features work as expected.
 
-Add these badges to your README.md:
+### 6. Test Module Integration
 
-```markdown
-[![Validate](https://github.com/franck01081991/nixos-fabric/actions/workflows/validate.yml/badge.svg)](https://github.com/franck01081991/nixos-fabric/actions/workflows/validate.yml)
-[![Build](https://github.com/franck01081991/nixos-fabric/actions/workflows/build.yml/badge.svg)](https://github.com/franck01081991/nixos-fabric/actions/workflows/build.yml)
-[![Test](https://github.com/franck01081991/nixos-fabric/actions/workflows/test.yml/badge.svg)](https://github.com/franck01081991/nixos-fabric/actions/workflows/test.yml)
+**Purpose**: Tests integration between different modules.
+
+**Tests**:
+- Security + Networking integration
+- Security + SSH integration
+- Security + Fail2ban integration
+
+**Output**: Confirms modules work well together.
+
+### 7. Prepare Deployment
+
+**Purpose**: Prepares deployment artifacts (master branch only).
+
+**Actions**:
+- Builds deployment artifacts
+- Prepares artifact directory
+- Uploads artifacts
+- Creates deployment summary
+
+**Output**: Deployment-ready artifacts and summary.
+
+### 8. Validate Documentation
+
+**Purpose**: Ensures documentation is complete and up-to-date.
+
+**Checks**:
+- Main documentation files
+- Module documentation
+- Example documentation
+- Test documentation
+- Documentation syntax
+- TODO comments tracking
+
+**Output**: Confirms documentation is complete.
+
+### 9. Final Validation
+
+**Purpose**: Final comprehensive validation.
+
+**Actions**:
+- Summarizes all validations
+- Creates pipeline summary
+- Uploads summary artifact
+
+**Output**: Final confirmation that everything works.
+
+## Pipeline Features
+
+### Comprehensive Validation
+- Validates repository structure and organization
+- Tests security module with multiple scenarios
+- Validates all host configurations
+- Builds and tests all configurations
+
+### Security Focus
+- Dedicated security module testing
+- Security feature validation
+- Integration testing with security
+- System hardening verification
+
+### Quality Assurance
+- Documentation completeness validation
+- Code quality checks
+- Configuration validation
+- Build verification
+
+### Deployment Ready
+- Artifact preparation for production
+- Deployment summary generation
+- Artifact upload for easy deployment
+
+### Clear Reporting
+- Step-by-step validation
+- Clear success/failure indicators
+- Comprehensive pipeline summary
+- Artifact upload for review
+
+## Success Criteria
+
+✅ **All jobs complete successfully**
+✅ **No syntax errors in any configuration**
+✅ **Security module works correctly**
+✅ **All configurations can be built**
+✅ **Documentation is complete**
+✅ **Deployment artifacts are ready**
+
+## Pipeline Execution
+
+### Triggers
+- **Push to master branch**: Runs full pipeline including deployment
+- **Pull request to master**: Runs validation and testing (no deployment)
+
+### Environment
+- **Ubuntu latest**: Standard GitHub Actions runner
+- **Nix with flakes**: Nix installation with flakes support
+- **Cachix cache**: For faster builds
+
+### Artifacts
+- **nixos-fabric-configurations**: Deployment artifacts
+- **pipeline-summary**: Pipeline execution summary
+
+## Pipeline Configuration
+
+### Environment Variables
+```yaml
+env:
+  NIX_CONFIG: |
+    experimental-features = nix-command flakes
+    substituters = https://cache.nixos.org https://cachix.org
+    trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 ```
 
-## 📊 Workflow Visualization
-
+### Job Dependencies
 ```mermaid
 graph TD
-    A[Push to master] --> B[Validate]
-    B -->|Success| C[Build]
-    B -->|Failure| F[Notify Failure]
-    C -->|Success| D[Test]
-    C -->|Failure| F
-    D -->|Success| E[Ready for Deployment]
-    D -->|Failure| F
-    E -->|Manual Trigger| G[Deploy]
-    G -->|Success| H[Deployment Complete]
-    G -->|Failure| F
+    validate-structure --> validate-security
+    validate-security --> validate-configurations
+    validate-configurations --> build-configurations
+    build-configurations --> test-security
+    test-security --> test-integration
+    test-integration --> prepare-deployment
+    validate-structure --> validate-documentation
+    validate-documentation --> final-validation
+    prepare-deployment --> final-validation
 ```
 
-## 🛠️ Usage Examples
+## Monitoring and Maintenance
 
-### Manual Deployment
+### Pipeline Monitoring
+- **GitHub Actions UI**: Visual interface for pipeline status
+- **Email notifications**: For pipeline failures
+- **Artifact download**: For deployment artifacts
 
-```bash
-# Trigger deployment via GitHub UI or API
-curl -X POST \
-  -H "Authorization: token YOUR_GITHUB_TOKEN" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/franck01081991/nixos-fabric/actions/workflows/deploy.yml/dispatches \
-  -d '{"ref":"master","inputs":{"target":"vm-sapinet","environment":"production"}}'
-```
+### Maintenance Tasks
+- **Update Nix version**: Periodically update Nix version
+- **Add new tests**: As new features are added
+- **Improve coverage**: Add more comprehensive tests
+- **Optimize performance**: Reduce pipeline execution time
 
-### Local Testing
-
-```bash
-# Test validation locally
-nix flake check
-nix eval .#nixosConfigurations.vm-sapinet.config.networking.hostName
-
-# Test build locally
-nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel --no-link
-
-# Test specific modules
-nix eval .#nixosConfigurations.vm-sapinet.config.network-fabric.wireguard
-```
-
-## 🔄 Workflow Dependencies
-
-```mermaid
-graph TD
-    validate[validate.yml] -->|must pass| build[build.yml]
-    build -->|must pass| test[test.yml]
-    test -->|manual trigger| deploy[deploy.yml]
-```
-
-## 📖 Best Practices
-
-### 1. Commit Messages
-
-Use clear commit messages that trigger appropriate workflows:
-- `fix(config): Update networking module` - Triggers all workflows
-- `docs: Update README` - Only triggers validation
-- `feat: Add new module` - Triggers all workflows
-
-### 2. Pull Requests
-
-All pull requests to master will trigger:
-- Validation workflow
-- Build workflow (after validation)
-- Test workflow (after build)
-
-### 3. Branch Protection
-
-Recommended branch protection rules:
-- Require status checks to pass
-- Require validation, build, and test workflows
-- Require pull request reviews
-- Require linear history
-
-### 4. Caching
-
-Use Cachix for faster builds:
-```bash
-# Push to cachix after local build
-nix build .#nixosConfigurations.vm-sapinet.config.system.build.toplevel
-cachix push nixos-fabric result
-```
-
-## 🛡️ Security
-
-### Secrets Management
-
-- Never commit secrets to repository
-- Use GitHub secrets for sensitive data
-- Rotate secrets regularly
-- Use ephemeral tokens for deployment
-
-### Deployment Security
-
-- Use SSH keys with passphrases
-- Restrict deployment to specific IPs
-- Use short-lived certificates
-- Enable audit logging
-
-## 📊 Monitoring
-
-### Workflow Monitoring
-
-Monitor workflows at:
-https://github.com/franck01081991/nixos-fabric/actions
-
-### Notifications
-
-Set up notifications in GitHub:
-1. Go to repository Settings
-2. Notifications
-3. Custom routing
-4. Add your email/Slack webhook
-
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**Issue**: "Nix version too old" error
-**Solution**: Upgrade Nix to 2.18.0 or higher:
-```bash
-# Check current version
-nix --version
+#### Pipeline Fails on Security Module
+**Cause**: Syntax error or missing dependency
+**Solution**: Check security module syntax with `nix-instantiate --eval`
 
-# Upgrade Nix
-nix upgrade-nix
+#### Configuration Build Fails
+**Cause**: Invalid configuration or missing options
+**Solution**: Test configuration with `nix eval .#nixosConfigurations.host.config.option`
 
-# Or reinstall
-curl -L https://nixos.org/nix/install | sh
-```
+#### Documentation Validation Fails
+**Cause**: Missing documentation files
+**Solution**: Add required documentation following `CONVENTIONS.md`
 
-**Issue**: Workflow fails on "Install Nix"
-**Solution**: Check GitHub Actions runner availability
-
-**Issue**: Build fails with "attribute not found"
-**Solution**: Check for typos in configuration files
-
-**Issue**: Cachix authentication fails
-**Solution**: Verify CACHIX_AUTH_TOKEN secret
-
-**Issue**: Workflow stuck in queue
-**Solution**: Check GitHub Actions quota
-
-### Debugging
+### Debugging Commands
 
 ```bash
-# Check workflow logs
-gh run list --workflow=validate.yml
+# Test security module locally
+nix-instantiate --eval -E 'import ./modules/security/init.nix'
 
-# View specific run
-gh run view RUN_ID
+# Test specific configuration
+nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
 
-# Download artifacts
-gh run download RUN_ID
+# Run organized tests locally
+./tests/run-organized-tests.sh
+
+# Check flake structure
+nix flake check
 ```
 
-## 📈 Performance Optimization
+## Best Practices
 
-### Caching Strategies
+### Pipeline Development
+1. **Test locally first**: Use `nix-instantiate` and `nix eval`
+2. **Add incremental tests**: Start with basic validation
+3. **Use clear job names**: Descriptive and action-oriented
+4. **Document each job**: Explain purpose and checks
+5. **Add meaningful output**: Helpful success/failure messages
 
-1. **Nix Store Cache**: Uses GitHub Actions cache
-2. **Cachix Cache**: Binary cache for Nix builds
-3. **Dependency Cache**: Automatic for Nixpkgs
+### Pipeline Maintenance
+1. **Monitor regularly**: Check pipeline execution
+2. **Update dependencies**: Keep Nix and actions updated
+3. **Add new tests**: For new features and modules
+4. **Optimize execution**: Parallelize where possible
+5. **Document changes**: Update this documentation
 
-### Parallelization
+## Pipeline Evolution
 
-The pipeline is designed to:
-- Run validation quickly (~2-3 min)
-- Build in parallel where possible
-- Cache intermediate results
-- Only rebuild what's necessary
+### Future Improvements
+- **Add more security tests**: Comprehensive security validation
+- **Performance optimization**: Faster pipeline execution
+- **Additional integration tests**: More module combinations
+- **Automated documentation generation**: From code comments
+- **Deployment automation**: Direct deployment to servers
 
-## 🎯 Future Enhancements
+### Version History
+- **v1.0**: Initial pipeline with basic validation
+- **v2.0**: Added security module testing
+- **v3.0**: Added comprehensive documentation validation
+- **v4.0**: Added deployment preparation and artifacts
 
-### Potential Improvements
+## Contributing to the Pipeline
 
-1. **Automated Deployment**: SSH-based deployment to targets
-2. **Rollback Mechanism**: Automatic rollback on failure
-3. **Canary Deployments**: Gradual rollout to nodes
-4. **Health Checks**: Post-deployment verification
-5. **Slack Notifications**: Real-time alerts
+### Adding New Jobs
+1. **Identify need**: What needs to be tested/validated
+2. **Create job**: Follow existing job structure
+3. **Add dependencies**: Connect to existing pipeline
+4. **Test locally**: Verify job works correctly
+5. **Document**: Add to this documentation
 
-### Implementation Ideas
+### Modifying Existing Jobs
+1. **Understand current behavior**: Read job documentation
+2. **Make small changes**: Incremental improvements
+3. **Test thoroughly**: Verify changes work
+4. **Update documentation**: Reflect changes
+5. **Monitor**: Check pipeline execution
 
-```yaml
-# Example: Add Slack notification
-- name: Slack Notification
-  if: always()
-  uses: rtCamp/action-slack-notify@v2
-  env:
-    SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-    SLACK_COLOR: ${{ job.status }}
-    SLACK_TITLE: "NixOS Fabric ${{ github.workflow }}"
-    SLACK_MESSAGE: "Status: ${{ job.status }}\nCommit: ${{ github.sha }}"
-```
+## Support
 
-## 📚 References
+For pipeline issues and questions:
+- **Check pipeline logs**: GitHub Actions UI
+- **Review documentation**: This file and `CONVENTIONS.md`
+- **Test locally**: Use provided debugging commands
+- **Open issue**: For persistent problems
 
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Nix Flakes Documentation](https://nixos.wiki/wiki/Flakes)
-- [Cachix Documentation](https://cachix.org)
-- [NixOS Module System](https://nixos.org/manual/nixos/stable/index.html#sec-writing-modules)
+## License
 
-## 🤝 Contributing
-
-Contributions to the pipeline are welcome:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📜 License
-
-This pipeline configuration is part of the NixOS Fabric project and is licensed under the MIT License.
+The CI/CD pipeline is part of the NixOS Fabric project and is licensed under the MIT License. See `LICENSE` for details.

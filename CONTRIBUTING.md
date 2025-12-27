@@ -1,339 +1,138 @@
 # Contributing to NixOS Fabric
 
-Welcome to the NixOS Fabric project! We appreciate your interest in contributing. This guide will help you get started with contributing to the project.
+First off, thank you for considering contributing to NixOS Fabric! We welcome contributions from everyone, whether you're fixing bugs, improving documentation, or adding new features.
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Code of Conduct](#-code-of-conduct)
-- [Getting Started](#-getting-started)
-- [Development Workflow](#-development-workflow)
-- [Configuration Guidelines](#-configuration-guidelines)
-- [Testing](#-testing)
-- [Documentation](#-documentation)
-- [Submitting Changes](#-submitting-changes)
-- [Review Process](#-review-process)
-- [Maintenance](#-maintenance)
+1. [Getting Started](#getting-started)
+2. [Development Setup](#development-setup)
+3. [Making Changes](#making-changes)
+4. [Code Style](#code-style)
+5. [Commit Guidelines](#commit-guidelines)
+6. [Pull Request Process](#pull-request-process)
+7. [Testing](#testing)
+8. [Documentation](#documentation)
+9. [Issue Reporting](#issue-reporting)
+10. [Community](#community)
 
-## 🤝 Code of Conduct
-
-By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please read it to understand the expected behavior.
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- NixOS 25.11 or later
-- Git
-- Basic understanding of Nix language
-- Familiarity with network concepts (OSPF, BGP, EVPN)
+- Basic knowledge of Nix and NixOS
+- Familiarity with Git and GitHub
+- Understanding of network security concepts (for security modules)
+- Nix installed on your system
 
-### Setting Up Your Environment
+### Repository Structure
+
+Please familiarize yourself with our repository structure by reading:
+- [`STRUCTURE.md`](STRUCTURE.md) - Overall repository organization
+- [`CONVENTIONS.md`](CONVENTIONS.md) - Naming and coding conventions
+- [`modules/security/README.md`](modules/security/README.md) - Security module documentation
+
+## Development Setup
+
+### Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/franck01081991/nixos-fabric.git
+git clone https://github.com/your-repo/nixos-fabric.git
 cd nixos-fabric
-
-# Initialize submodules
-git submodule update --init --recursive
-
-# Check the flake
-nix flake check
-
-# Build a configuration
-nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel
 ```
 
-### Project Structure
-
-```
-nixos-fabric/
-├── docs/                  # Documentation
-├── hosts/                 # Host configurations
-├── modules/               # Nix modules
-├── scripts/               # Utility scripts
-├── ansible/               # Ansible integration
-├── external/              # External submodules
-└── tests/                 # Test configurations
-```
-
-## 🔧 Development Workflow
-
-### 1. Create a Feature Branch
+### Set Up Development Environment
 
 ```bash
-git checkout -b feat/your-feature-name
+# Enter a Nix shell with development tools
+nix-shell
+
+# Or use direenv (recommended)
+echo "use nix" > .envrc
+direnv allow
 ```
 
-### 2. Make Your Changes
-
-- Follow the existing code style
-- Keep changes focused and atomic
-- Update documentation as needed
-- Add tests for new functionality
-
-### 3. Test Your Changes
+### Build and Test
 
 ```bash
-# Test configuration evaluation
-nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
+# Test the security module
+nix-instantiate --eval -E 'import ./modules/security/init.nix'
 
-# Test configuration building
-nix build .#nixosConfigurations.rtr-sapinet.config.system.build.toplevel
+# Run the organized test suite
+tests/run-organized-tests.sh
 
-# Test in a VM
-nix run .#nixosConfigurations.rtr-sapinet.config.system.build.vm
+# Test example configuration
+nix-instantiate --eval -E 'import ./examples/security-example.nix'
 ```
 
-### 4. Run the Test Suite
+## Making Changes
+
+### Branch Strategy
 
 ```bash
-./tests/run-tests.nix
+# Create a feature branch
+git checkout -b feature/your-feature-name
+
+# Create a bugfix branch
+git checkout -b bugfix/issue-description
+
+# Create a documentation branch
+git checkout -b docs/update-section
 ```
 
-### 5. Update Documentation
+### Development Workflow
 
-- Update relevant documentation files
-- Add examples if applicable
-- Update architecture diagrams if needed
+1. **Create a branch** for your changes
+2. **Make small, focused changes** - one feature/bug per branch
+3. **Test your changes** thoroughly
+4. **Update documentation** if needed
+5. **Run the test suite** to ensure nothing breaks
+6. **Commit your changes** following our guidelines
+7. **Push to GitHub** and open a pull request
 
-### 6. Commit Your Changes
+## Code Style
 
-```bash
-git add .
-git commit -m "feat: add your feature description"
-```
+Please follow our coding conventions outlined in [`CONVENTIONS.md`](CONVENTIONS.md). Key points:
 
-### 7. Push to Your Fork
+- **Consistent indentation** (2 spaces)
+- **Descriptive naming** for variables and functions
+- **Comprehensive comments** for complex logic
+- **Logical organization** of code sections
+- **Clear documentation** for new features
 
-```bash
-git push origin feat/your-feature-name
-```
-
-### 8. Create a Pull Request
-
-- Provide a clear description of your changes
-- Reference any related issues
-- Include screenshots if applicable
-- Request review from maintainers
-
-## 📖 Configuration Guidelines
-
-### Nix Module Structure
+### Example of Good Code
 
 ```nix
-# Recommended module structure
-{ config, lib, pkgs, ... }:
+# ============================================
+# SSH Configuration Section
+# ============================================
+# Configure OpenSSH with security-hardened settings
+# including custom ports, authentication restrictions,
+# and connection limits.
+# ============================================
 
-{
-  options = {
-    # Define your options here
-    your-module.enable = lib.mkEnableOption "Enable your module";
-    your-module.setting = lib.mkOption {
-      type = lib.types.str;
-      default = "default-value";
-      description = "Description of this setting";
-    };
-  };
+services.openssh = mkIf cfg.ssh.enable {
+  enable = true;
   
-  config = lib.mkIf config.your-module.enable {
-    # Your configuration here
-    environment.systemPackages = with pkgs; [ your-package ];
-    systemd.services.your-service = {
-      description = "Your service";
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        ExecStart = "${your-package}/bin/your-service";
-      };
-    };
+  settings = {
+    Port = toString cfg.ssh.port;  # Custom SSH port for security
+    PermitRootLogin = mkForce cfg.ssh.permitRootLogin;  # Disable root login
+    PasswordAuthentication = mkForce cfg.ssh.passwordAuthentication;  # Keys only
+    ChallengeResponseAuthentication = false;
+    UsePAM = true;
+    AllowUsers = cfg.ssh.allowUsers;
+    AllowGroups = cfg.ssh.allowGroups;
+    MaxAuthTries = toString cfg.ssh.maxAuthTries;
+    LoginGraceTime = "${toString cfg.ssh.loginGraceTime}s";
+    Banner = cfg.ssh.banner;
   };
-}
+};
 ```
 
-### Role Configuration
+## Commit Guidelines
 
-```nix
-# Spine role example
-{
-  network-fabric.roles.spine = {
-    enable = true;
-    roleId = "spine1";
-    # Spine-specific configuration
-    routing = {
-      ospf = {
-        area = "0.0.0.0";
-        networks = [ "10.254.0.0/16" ];
-      };
-      bgp = {
-        asNumber = 65000;
-        neighbors = [ "10.254.0.11" ];
-      };
-    };
-  };
-}
-```
-
-### Network Configuration
-
-```nix
-# Network interface example
-{
-  networking.interfaces.eth0 = {
-    ipv4.addresses = [ {
-      address = "10.254.0.1";
-      prefixLength = 24;
-    } ];
-    ipv6.addresses = [ {
-      address = "fd42:1337:254::1";
-      prefixLength = 64;
-    } ];
-  };
-}
-```
-
-## 🧪 Testing
-
-### Test Structure
-
-```
-tests/
-├── hosts/               # Host-specific tests
-├── modules/              # Module tests
-├── integration/          # Integration tests
-└── run-tests.nix         # Test runner
-```
-
-### Writing Tests
-
-```nix
-# Example test in tests/modules/networking.nix
-{ pkgs, ... }:
-
-let
-  testConfig = {
-    networking.interfaces.eth0.ipv4.addresses = [ {
-      address = "10.0.0.1";
-      prefixLength = 24;
-    } ];
-  };
-  
-  testModule = { config, lib, pkgs, ... }: {
-    options = { };
-    config = { };
-  };
-  
-  testResult = pkgs.lib.nixosTest {
-    name = "networking-config";
-    inherit testModule;
-    testScript = ''
-      machine.succeed("ip addr show eth0 | grep '10.0.0.1'")
-    '';
-  };
-
-in testResult
-```
-
-### Running Tests
+### Commit Message Format
 
 ```bash
-# Run all tests
-./tests/run-tests.nix
-
-# Run specific test
-nix-build tests/modules/networking.nix
-
-# Run in a VM
-nix run .#nixosConfigurations.rtr-sapinet.config.system.build.vm --test
-```
-
-## 📚 Documentation
-
-### Documentation Structure
-
-```
-docs/
-├── architecture/        # Architecture documents
-├── deployment/          # Deployment guides
-├── development/         # Development documentation
-├── reference/           # Reference materials
-└── troubleshooting/      # Troubleshooting guides
-```
-
-### Writing Documentation
-
-```markdown
-# Example Documentation Structure
-
-## 🎯 Overview
-
-Brief description of the topic.
-
-## 🔧 Configuration
-
-### Basic Configuration
-
-```nix
-# Example configuration
-{
-  your-module.enable = true;
-  your-module.setting = "value";
-}
-```
-
-### Advanced Configuration
-
-```nix
-# Advanced example
-{
-  your-module = {
-    enable = true;
-    advanced = {
-      setting1 = "value1";
-      setting2 = "value2";
-    };
-  };
-}
-```
-
-## 🚀 Usage
-
-### Basic Usage
-
-```bash
-# Example command
-your-command --option value
-```
-
-### Advanced Usage
-
-```bash
-# Advanced example
-your-command --advanced-option value --another-option value
-```
-
-## 🛡️ Security
-
-Security considerations and best practices.
-
-## 📚 References
-
-- [Related Documentation](link-to-docs)
-- [Official Documentation](link-to-official-docs)
-```
-
-### Documentation Standards
-
-1. **Use clear section headers** with emojis for visual separation
-2. **Provide examples** for all configuration options
-3. **Include usage examples** with actual commands
-4. **Document security considerations** where applicable
-5. **Link to related documentation** for further reading
-
-## 📤 Submitting Changes
-
-### Commit Message Guidelines
-
-```
 <type>(<scope>): <subject>
 <BLANK LINE>
 <body>
@@ -341,99 +140,348 @@ Security considerations and best practices.
 <footer>
 ```
 
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Adding or modifying tests
-- `chore`: Maintenance tasks
+### Types
 
-**Example:**
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **chore**: Changes to the build process or auxiliary tools and libraries
+
+### Scopes
+
+- **security**: Security module changes
+- **networking**: Networking module changes
+- **wireguard**: WireGuard module changes
+- **frr**: FRR routing module changes
+- **ansible**: Ansible integration changes
+- **docs**: Documentation changes
+- **tests**: Test suite changes
+- **examples**: Example configuration changes
+- **structure**: Repository structure changes
+
+### Examples
+
+```bash
+# Good commit messages
+feat(security): add AppArmor profile support
+fix(networking): correct firewall rule generation
+docs: update security module README
+refactor(security): improve module organization
+test(security): add comprehensive test suite
+chore: update CI/CD pipeline configuration
+
+# Bad commit messages (avoid these)
+fix stuff
+update security module
+wip
+fix bug
+add feature
 ```
-feat(networking): add IPv6 support for WireGuard
 
-- Add IPv6 address configuration to WireGuard module
-- Update documentation with IPv6 examples
-- Add tests for IPv6 connectivity
+### Commit Body
 
-Closes #42
-```
+- Explain **what** was changed and **why**
+- Include **before/after** examples if helpful
+- Reference related issues or pull requests
+- Keep lines under 72 characters
 
-### Pull Request Guidelines
+### Commit Footer
 
-1. **Clear title** describing the change
-2. **Detailed description** explaining:
-   - What problem is being solved
-   - How the solution works
+- Reference issues: `Fixes #123`, `Closes #456`, `Related to #789`
+- Breaking changes: `BREAKING CHANGE: ...`
+- Reviewed by: `Reviewed-by: @contributor`
+
+## Pull Request Process
+
+### Before Submitting
+
+1. **Rebase your branch** on the latest `master`
+2. **Run the test suite** to ensure everything works
+3. **Check your code** against our conventions
+4. **Update documentation** if your changes affect usage
+5. **Write clear commit messages** following our guidelines
+
+### Submitting
+
+1. **Push your branch** to GitHub
+2. **Open a Pull Request** with a clear title and description
+3. **Include** in the description:
+   - What problem you're solving
+   - How your solution works
    - Any breaking changes
-   - Testing performed
-3. **Reference related issues** using `Closes #123` or `Related to #123`
-4. **Include screenshots** if UI changes are involved
-5. **Request specific reviewers** if needed
+   - Screenshots if applicable
+   - Related issues
 
-## 👀 Review Process
+### Review Process
 
-### Review Checklist
+1. **Automated checks** will run (CI/CD pipeline)
+2. **Maintainers will review** your code
+3. **Address feedback** and make requested changes
+4. **Once approved**, your PR will be merged
 
-- [ ] Code follows project style guidelines
-- [ ] Changes are focused and atomic
-- [ ] Documentation is updated
-- [ ] Tests are added/modified
-- [ ] No breaking changes without justification
-- [ ] Security considerations are addressed
-- [ ] Performance impact is acceptable
+### After Merge
 
-### Review Timeline
+- Your changes will be included in the next release
+- Documentation will be updated automatically
+- You'll be credited in the contributors list
 
-1. **Initial Review**: Within 48 hours of PR submission
-2. **Feedback Response**: Within 72 hours of feedback
-3. **Final Approval**: Within 24 hours of final changes
-4. **Merge**: After all checks pass
+## Testing
 
-## 🛠️ Maintenance
+### Test Requirements
+
+All contributions must:
+1. **Pass existing tests** - Don't break current functionality
+2. **Include new tests** - Cover your new features or bug fixes
+3. **Follow test conventions** - Use our organized test structure
+
+### Running Tests
+
+```bash
+# Run all organized tests
+tests/run-organized-tests.sh
+
+# Test specific module
+nix-instantiate --eval -E 'import ./modules/security/init.nix'
+
+# Test example configuration
+nix-instantiate --eval -E 'import ./examples/security-example.nix'
+
+# Test in a VM
+nixos-rebuild build-vm -I nixos-config=./your-config.nix
+```
+
+### Writing Tests
+
+Follow our test organization structure:
+
+```bash
+tests/
+├── modules/              # Module-specific tests
+│   ├── security/         # Security module tests
+│   │   ├── init.nix      # Test entry point
+│   │   └── default.nix   # Main test suite
+│   └── ...               # Other module tests
+└── ...                   # Integration tests
+```
+
+## Documentation
+
+### Documentation Requirements
+
+All new features must include:
+1. **Code comments** explaining the implementation
+2. **README updates** if the feature is user-facing
+3. **Example configurations** showing usage
+4. **API documentation** for new options
+
+### Documentation Standards
+
+Follow our documentation standards from [`CONVENTIONS.md`](CONVENTIONS.md):
+
+- **Complete examples** with all necessary context
+- **Clear explanations** of what each option does
+- **Usage patterns** for common scenarios
+- **Troubleshooting** information
+
+### Documentation Tools
+
+```bash
+# Validate markdown
+npx markdownlint **/*.md
+
+# Check for broken links
+npx markdowntoc --check **/*.md
+
+# Preview documentation
+npx grip README.md
+```
+
+## Issue Reporting
+
+### Before Reporting
+
+1. **Search existing issues** to avoid duplicates
+2. **Check our documentation** for solutions
+3. **Test with the latest version** to ensure it's not fixed
+
+### Good Issue Reports
+
+Include:
+- **Clear title** describing the problem
+- **Detailed description** of what's happening
+- **Steps to reproduce** the issue
+- **Expected behavior** vs **actual behavior**
+- **Environment details** (NixOS version, hardware, etc.)
+- **Relevant configuration** (redact sensitive info)
+- **Error messages** or logs
+
+### Issue Template
+
+```markdown
+## Description
+
+Clear description of the issue.
+
+## Steps to Reproduce
+
+1. Step one
+2. Step two
+3. Step three
+
+## Expected Behavior
+
+What should happen.
+
+## Actual Behavior
+
+What actually happens.
+
+## Environment
+
+- NixOS Version: 
+- Hardware: 
+- Configuration: 
+
+## Additional Information
+
+Any other relevant information, logs, or screenshots.
+```
+
+## Community
+
+### Ways to Contribute
+
+- **Code**: Fix bugs, add features, improve performance
+- **Documentation**: Improve docs, add examples, write tutorials
+- **Tests**: Add test coverage, improve test quality
+- **Issues**: Report bugs, suggest features, help triage
+- **Reviews**: Review pull requests, provide feedback
+- **Discussions**: Participate in discussions, share ideas
+
+### Communication
+
+- **GitHub Issues**: For bug reports and feature requests
+- **Pull Requests**: For code contributions
+- **Discussions**: For general questions and ideas
+
+### Code of Conduct
+
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interactions.
+
+## Getting Help
+
+### Resources
+
+- **Documentation**: Start with our comprehensive docs
+- **Examples**: Check the `examples/` directory
+- **Tests**: Review test configurations for usage patterns
+- **Structure**: See `STRUCTURE.md` for organization
+- **Conventions**: Follow `CONVENTIONS.md` for style
+
+### Asking for Help
+
+1. **Check existing issues** for similar problems
+2. **Review documentation** thoroughly
+3. **Search discussions** for answers
+4. **Open a new issue** if you can't find a solution
+
+## Development Tips
+
+### Working with Security Module
+
+```bash
+# Test security module changes
+nix-instantiate --eval -E 'import ./modules/security/init.nix'
+
+# Test with different configurations
+nix-instantiate --eval -E '
+  let
+    config = {
+      network-fabric.security = {
+        enable = true;
+        ssh.port = 2222;
+      };
+    };
+  in import ./modules/security/init.nix { inherit config; }'
+```
+
+### Debugging
+
+```bash
+# Verbose evaluation
+nix-instantiate --eval --show-trace -E 'import ./your-file.nix'
+
+# Check for undefined variables
+nix-instantiate --eval --strict -E 'import ./your-file.nix'
+
+# Interactive environment
+nix repl
+> :l <nixpkgs>
+> import ./modules/security/init.nix
+```
+
+### Performance
+
+```bash
+# Build with timing
+time nix-build -E 'import ./your-config.nix'
+
+# Check evaluation time
+nix-instantiate --eval -E 'import ./your-config.nix' --time
+
+# Optimize imports
+# Use lazy evaluation where possible
+# Avoid unnecessary computations
+```
+
+## Release Process
 
 ### Versioning
 
-We follow semantic versioning:
-- `MAJOR`: Breaking changes
-- `MINOR`: New features (backward compatible)
-- `PATCH`: Bug fixes (backward compatible)
+We follow **Semantic Versioning** (SemVer):
+- **MAJOR**: Breaking changes
+- **MINOR**: New features (backward compatible)
+- **PATCH**: Bug fixes (backward compatible)
 
-### Release Process
+### Release Checklist
 
-1. **Create release branch**: `release/vX.Y.Z`
-2. **Update changelog**: Document all changes
-3. **Run full test suite**: Ensure all tests pass
-4. **Create Git tag**: `vX.Y.Z`
-5. **Publish release**: Create GitHub release
-6. **Merge to master**: Update main branch
+- [ ] All tests pass
+- [ ] Documentation is up to date
+- [ ] Changelog is updated
+- [ ] Breaking changes are documented
+- [ ] Examples are tested
+- [ ] CI/CD pipeline passes
 
-### Deprecation Policy
+## Maintainers
 
-1. **Announce deprecation** in release notes
-2. **Maintain deprecated features** for 2 minor versions
-3. **Remove in major version** with clear migration path
+### Responsibilities
 
-## 🤝 Community
+- Review pull requests
+- Merge approved changes
+- Manage releases
+- Maintain roadmap
+- Ensure code quality
+- Handle security issues
 
-### Getting Help
+### Becoming a Maintainer
 
-- **GitHub Issues**: For bug reports and feature requests
-- **Discussions**: For general questions and ideas
-- **Documentation**: For usage and configuration questions
+If you're interested in becoming a maintainer:
+1. **Contribute regularly** to the project
+2. **Demonstrate expertise** in Nix and security
+3. **Help others** in the community
+4. **Show commitment** to the project's goals
+5. **Contact existing maintainers** to discuss
 
-### Community Guidelines
+## License
 
-1. **Be respectful** and considerate
-2. **Help others** when you can
-3. **Share knowledge** through documentation
-4. **Give constructive feedback**
-5. **Celebrate successes** together
+By contributing to NixOS Fabric, you agree that your contributions will be licensed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
-## 🎉 Thank You!
+## Acknowledgments
 
-Your contributions help make NixOS Fabric better for everyone. We appreciate your time and effort in improving this project!
+Thank you for contributing to NixOS Fabric! Your contributions help make this project better for everyone. We appreciate your time, effort, and expertise.
 
-Happy hacking! 🚀
+**Happy coding!** 🚀

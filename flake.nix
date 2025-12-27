@@ -32,6 +32,7 @@
       nixosConfigurations = {
         "rtr-sapinet" = mkHost { system = "x86_64-linux"; hostname = "rtr-sapinet"; };
         "rtr-noisy" = mkHost { system = "x86_64-linux"; hostname = "rtr-noisy"; };
+        "test-vm" = mkHost { system = "x86_64-linux"; hostname = "test-vm"; };
       };
     };
 }
