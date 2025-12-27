@@ -37,7 +37,6 @@
     RateLimitBurst=1000
   '';
 
-  security.apparmor.enable = true;
-  security.auditd.enable = true;
-  security.audit.enable = true;
+  network-fabric.security-improved.apparmor.enable = true;
+  network-fabric.security-improved.auditd.enable = true;
 }

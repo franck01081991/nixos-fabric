@@ -221,7 +221,7 @@ EOF
   # TODO: Re-add validation with proper syntax
 
 in {
-  options.network-fabric.security = {
+  options.network-fabric.security-improved = {
     enable = mkEnableOption "Enable comprehensive security configuration";
     
     # SSH configuration
@@ -340,25 +340,25 @@ in {
     };
   };
   
-  config = lib.mkIf config.network-fabric.security.enable {
+  config = lib.mkIf config.network-fabric.security-improved.enable ({
     # Validate security configuration (removed for now due to syntax issues)
     # TODO: Re-add validation with proper syntax
     
     # SSH configuration
-    services.openssh = lib.mkIf config.network-fabric.security.ssh.enable {
+    services.openssh = lib.mkIf config.network-fabric.security-improved.ssh.enable {
       enable = true;
-      permitRootLogin = config.network-fabric.security.ssh.permitRootLogin;
-      passwordAuthentication = config.network-fabric.security.ssh.passwordAuthentication;
-      challengeResponseAuthentication = false;
-      usePAM = true;
       
       settings = {
-        Port = lib.toString config.network-fabric.security.ssh.port;
-        AllowUsers = lib.concatStringsSep " " config.network-fabric.security.ssh.allowUsers;
-        AllowGroups = lib.concatStringsSep " " config.network-fabric.security.ssh.allowGroups;
-        MaxAuthTries = lib.toString config.network-fabric.security.ssh.maxAuthTries;
-        LoginGraceTime = "${lib.toString config.network-fabric.security.ssh.loginGraceTime}s";
-        Banner = config.network-fabric.security.ssh.banner;
+        Port = lib.toString config.network-fabric.security-improved.ssh.port;
+        PermitRootLogin = config.network-fabric.security-improved.ssh.permitRootLogin;
+        PasswordAuthentication = config.network-fabric.security-improved.ssh.passwordAuthentication;
+        ChallengeResponseAuthentication = false;
+        UsePAM = true;
+        AllowUsers = lib.concatStringsSep " " config.network-fabric.security-improved.ssh.allowUsers;
+        AllowGroups = lib.concatStringsSep " " config.network-fabric.security-improved.ssh.allowGroups;
+        MaxAuthTries = lib.toString config.network-fabric.security-improved.ssh.maxAuthTries;
+        LoginGraceTime = "${lib.toString config.network-fabric.security-improved.ssh.loginGraceTime}s";
+        Banner = config.network-fabric.security-improved.ssh.banner;
       };
     };
     
@@ -369,10 +369,10 @@ in {
     '';
     
     # Firewall configuration
-    networking.firewall = lib.mkIf config.network-fabric.security.firewall.enable {
+    networking.firewall = lib.mkIf config.network-fabric.security-improved.firewall.enable {
       enable = true;
-      allowedTCPPorts = config.network-fabric.security.firewall.allowedTCP;
-      allowedUDPPorts = config.network-fabric.security.firewall.allowedUDP;
+      allowedTCPPorts = config.network-fabric.security-improved.firewall.allowedTCP;
+      allowedUDPPorts = config.network-fabric.security-improved.firewall.allowedUDP;
       
       # Custom nftables rules
       extraCommands = ''
@@ -381,63 +381,60 @@ in {
     };
     
     # Fail2ban configuration
-    security.fail2ban = lib.mkIf config.network-fabric.security.fail2ban.enable {
+    services.fail2ban = lib.mkIf config.network-fabric.security-improved.fail2ban.enable {
       enable = true;
-      settings = {
-        bantime = lib.toString config.network-fabric.security.fail2ban.bantime;
-        findtime = lib.toString config.network-fabric.security.fail2ban.findtime;
-        maxretry = lib.toString config.network-fabric.security.fail2ban.maxretry;
-      };
-      
-      # Generate fail2ban configuration
-      system.activationScripts.fail2banConfig = lib.mkBefore ''
-        mkdir -p /etc/fail2ban
-        echo "${generateFail2banConfig config.network-fabric.security}" > /etc/fail2ban/jail.local
-      '';
+      jails = lib.mapAttrs (name: jailConfig: 
+        {
+          settings = {
+            enabled = jailConfig.enabled;
+            backend = jailConfig.backend or "systemd";
+            port = jailConfig.port or "ssh";
+            filter = jailConfig.filter or "sshd";
+            maxretry = lib.toString (jailConfig.maxretry or config.network-fabric.security-improved.fail2ban.maxretry);
+            findtime = lib.toString (jailConfig.findtime or config.network-fabric.security-improved.fail2ban.findtime);
+            bantime = lib.toString (jailConfig.bantime or config.network-fabric.security-improved.fail2ban.bantime);
+          };
+        }
+      ) config.network-fabric.security-improved.fail2ban.jails;
     };
+    
+    # Generate fail2ban configuration
+    system.activationScripts.fail2banConfig = lib.mkIf config.network-fabric.security-improved.fail2ban.enable ''
+      mkdir -p /etc/fail2ban
+      echo "${generateFail2banConfig config.network-fabric.security}" > /etc/fail2ban/jail.local
+    '';
     
     # AppArmor configuration
-    security.apparmor.enable = lib.mkIf config.network-fabric.security.apparmor.enable true;
-      
-      # Generate AppArmor profiles
-      system.activationScripts.apparmorProfiles = lib.mkBefore ''
-        mkdir -p /etc/apparmor.d
-        echo "${generateAppArmorProfiles config.network-fabric.security}" > /etc/apparmor.d/fabric-profiles
-        apparmor_parser -r /etc/apparmor.d/fabric-profiles
-      '';
-    };
+    security.apparmor.enable = lib.mkIf config.network-fabric.security-improved.apparmor.enable true;
+    
+    # Generate AppArmor profiles
+    system.activationScripts.apparmorProfiles = lib.mkIf config.network-fabric.security-improved.apparmor.enable ''
+      mkdir -p /etc/apparmor.d
+      echo "${generateAppArmorProfiles config.network-fabric.security}" > /etc/apparmor.d/fabric-profiles
+      apparmor_parser -r /etc/apparmor.d/fabric-profiles
+    '';
     
     # Auditd configuration
-    security.auditd = lib.mkIf config.network-fabric.security.auditd.enable {
-      enable = true;
-      
-      settings = {
-        space_left = lib.toString config.network-fabric.security.auditd.spaceLeft;
-        space_left_action = config.network-fabric.security.auditd.spaceLeftAction;
-        admin_space_left = lib.toString config.network-fabric.security.auditd.adminSpaceLeft;
-        max_log_file = lib.toString config.network-fabric.security.auditd.maxLogFile;
-        max_log_file_action = config.network-fabric.security.auditd.maxLogFileAction;
-      };
-      
-      # Generate audit rules
-      system.activationScripts.auditdRules = lib.mkBefore ''
-        mkdir -p /etc/audit/rules.d
-        echo "${generateAuditdRules config.network-fabric.security}" > /etc/audit/rules.d/fabric.rules
-        augtool set /files/etc/audit/auditd.conf/space_left ${lib.toString config.network-fabric.security.auditd.spaceLeft}
-        augtool set /files/etc/audit/auditd.conf/space_left_action "${config.network-fabric.security.auditd.spaceLeftAction}"
-        augtool set /files/etc/audit/auditd.conf/admin_space_left ${lib.toString config.network-fabric.security.auditd.adminSpaceLeft}
-        augtool set /files/etc/audit/auditd.conf/max_log_file ${lib.toString config.network-fabric.security.auditd.maxLogFile}
-        augtool set /files/etc/audit/auditd.conf/max_log_file_action "${config.network-fabric.security.auditd.maxLogFileAction}"
-      '';
-    };
+    security.auditd.enable = lib.mkIf config.network-fabric.security-improved.auditd.enable true;
+    
+    # Generate audit rules
+    system.activationScripts.auditdRules = lib.mkIf config.network-fabric.security-improved.auditd.enable ''
+      mkdir -p /etc/audit/rules.d
+      echo "${generateAuditdRules config.network-fabric.security}" > /etc/audit/rules.d/fabric.rules
+      augtool set /files/etc/audit/auditd.conf/space_left ${lib.toString config.network-fabric.security-improved.auditd.spaceLeft}
+      augtool set /files/etc/audit/auditd.conf/space_left_action "${config.network-fabric.security-improved.auditd.spaceLeftAction}"
+      augtool set /files/etc/audit/auditd.conf/admin_space_left ${lib.toString config.network-fabric.security-improved.auditd.adminSpaceLeft}
+      augtool set /files/etc/audit/auditd.conf/max_log_file ${lib.toString config.network-fabric.security-improved.auditd.maxLogFile}
+      augtool set /files/etc/audit/auditd.conf/max_log_file_action "${config.network-fabric.security-improved.auditd.maxLogFileAction}"
+    '';
     
     # Secret management
-    system.activationScripts.secretsSetup = lib.mkIf config.network-fabric.security.secrets.enable ''
+    system.activationScripts.secretsSetup = lib.mkIf config.network-fabric.security-improved.secrets.enable ''
       ${setupSecretsDirectory}
     '';
     
     # Security updates
-    system.activationScripts.securityUpdates = lib.mkIf config.network-fabric.security.updates.enable ''
+    system.activationScripts.securityUpdates = lib.mkIf config.network-fabric.security-improved.updates.enable ''
       # Set up security update checks
       mkdir -p /etc/nixos-fabric/security
       cat > /etc/nixos-fabric/security/updates.sh <<EOF
@@ -466,7 +463,7 @@ EOL
 Description=Run security updates check
 
 [Timer]
-OnCalendar=${config.network-fabric.security.updates.checkInterval}
+OnCalendar=${config.network-fabric.security-improved.updates.checkInterval}
 Persistent=true
 
 [Install]
@@ -480,9 +477,9 @@ EOL
     # Security environment variables
     environment.sessionVariables = {
       NIXOS_FABRIC_SECURITY_ENABLED = "true";
-      NIXOS_FABRIC_SSH_PORT = lib.toString config.network-fabric.security.ssh.port;
-      NIXOS_FABRIC_FIREWALL_ENABLED = lib.toString config.network-fabric.security.firewall.enable;
-      NIXOS_FABRIC_FAIL2BAN_ENABLED = lib.toString config.network-fabric.security.fail2ban.enable;
+      NIXOS_FABRIC_SSH_PORT = lib.toString config.network-fabric.security-improved.ssh.port;
+      NIXOS_FABRIC_FIREWALL_ENABLED = lib.toString config.network-fabric.security-improved.firewall.enable;
+      NIXOS_FABRIC_FAIL2BAN_ENABLED = lib.toString config.network-fabric.security-improved.fail2ban.enable;
     };
     
     # Security monitoring
@@ -497,7 +494,9 @@ EOL
                 monitor = "security";
               };
             }
+          ];
+        }
       ];
     };
-}
+  });
 }
