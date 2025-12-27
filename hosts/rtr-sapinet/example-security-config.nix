@@ -5,7 +5,7 @@
 
 {
   # Enable comprehensive security
-  network-fabric.security = {
+  network-fabric.security-improved = {
     enable = true;
     
     # SSH configuration - hardened for spine node
@@ -141,8 +141,8 @@ echo "Role: spine"
 echo "Environment: ${config.network-fabric.environment}"
 
 # Send email alert
-if [ -n "${config.network-fabric.security.updates.emailNotifications}" ]; then
-  echo "Sending alert to ${config.network-fabric.security.updates.emailNotifications}"
+if [ -n "${config.network-fabric.security-improved.updates.emailNotifications}" ]; then
+  echo "Sending alert to ${config.network-fabric.security-improved.updates.emailNotifications}"
   # In a real implementation, this would send an actual email
 fi
 

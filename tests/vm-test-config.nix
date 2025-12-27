@@ -113,6 +113,13 @@
   # System configuration
   system.stateVersion = "23.11";
   
+  # Boot configuration for VM testing
+  boot.loader.grub = {
+    enable = true;
+    device = lib.mkDefault "/dev/vda";
+    efiSupport = false;
+  };
+  
   # Environment variables for testing
   environment.sessionVariables = {
     TEST_ENVIRONMENT = "true";
