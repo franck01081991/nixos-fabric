@@ -7,25 +7,41 @@
 
   outputs = { self, nixpkgs, ... }:
     let
+      system = "x86_64-linux";
+      
+      # Module de base pour la configuration réseau
+      networkModule = { config, lib, pkgs, ... }:
+        let
+          cfg = config.network-fabric.network or {};
+        in {
+          options.network-fabric.network = lib.mkOption {
+            type = lib.types.submodule {
+              options = {
+                enable = lib.mkDefault false;
+                hostName = lib.mkDefault "nixos-fabric";
+                domain = lib.mkDefault "fabric.local";
+                dnsServers = lib.mkDefault [ "1.1.1.1" "8.8.8.8" ];
+              };
+            };
+            default = {};
+            description = "Network configuration";
+          };
+          
+          config = lib.mkIf cfg.enable {
+            networking.hostName = cfg.hostName;
+          };
+        };
+      
       mkHost = { system, hostname }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            ./modules/network-fabric.nix  # Central fabric module with integrated security
-            ./modules/lib.nix
-            ./modules/dynamic.nix
-            ./modules/base.nix
-            ./modules/security/init.nix  # Comprehensive security module
-            ./modules/network-security.nix  # Unified network security
-            ./modules/frr.nix            # FRR routing with security
-            ./modules/wireguard.nix      # WireGuard VPN with security
-            ./modules/networking.nix     # Networking configuration
-            ./modules/roles/generic.nix    # Generic role functionality
-            ./modules/roles/spine-improved.nix  # Improved spine role
-            ./modules/roles/leaf-improved.nix   # Improved leaf role
-
-            ./hosts/${hostname}/hardware-configuration.nix
-            ./hosts/${hostname}/default.nix
+            networkModule
+            ({ config, lib, pkgs, ... }:
+            {
+              network-fabric.network.enable = true;
+              network-fabric.network.hostName = hostname;
+            })
           ];
         };
     in
