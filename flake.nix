@@ -1,5 +1,5 @@
 {
-  description = "Spine/leaf fabric (rtr-sapinet + rtr-noisy)";
+  description = "NixOS Fabric - New Clean Flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
@@ -9,22 +9,26 @@
     let
       system = "x86_64-linux";
       
-      # Module de base pour la configuration réseau
+      # Simple network module
       networkModule = { config, lib, pkgs, ... }:
         let
           cfg = config.network-fabric.network or {};
         in {
-          options.network-fabric.network = lib.mkOption {
-            type = lib.types.submodule {
-              options = {
-                enable = lib.mkDefault false;
-                hostName = lib.mkDefault "nixos-fabric";
-                domain = lib.mkDefault "fabric.local";
-                dnsServers = lib.mkDefault [ "1.1.1.1" "8.8.8.8" ];
+          options.network-fabric = {
+            enable = lib.mkEnableOption "Enable NixOS Fabric";
+            
+            network = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  enable = lib.mkDefault false;
+                  hostName = lib.mkDefault "nixos-fabric";
+                  domain = lib.mkDefault "fabric.local";
+                  dnsServers = lib.mkDefault [ "1.1.1.1" "8.8.8.8" ];
+                };
               };
+              default = {};
+              description = "Network configuration";
             };
-            default = {};
-            description = "Network configuration";
           };
           
           config = lib.mkIf cfg.enable {
@@ -32,7 +36,7 @@
           };
         };
       
-      mkHost = { system, hostname }:
+      mkHost = { hostname }:
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
@@ -47,9 +51,7 @@
     in
     {
       nixosConfigurations = {
-        "rtr-sapinet" = mkHost { system = "x86_64-linux"; hostname = "rtr-sapinet"; };
-        "rtr-noisy" = mkHost { system = "x86_64-linux"; hostname = "rtr-noisy"; };
-        "test-vm" = mkHost { system = "x86_64-linux"; hostname = "test-vm"; };
+        "test" = mkHost { hostname = "test"; };
       };
     };
 }
