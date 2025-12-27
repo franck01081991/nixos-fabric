@@ -4,6 +4,13 @@ let
   cfg = config.network-fabric.ansible;
   ansibleConfigDir = "/etc/nixos-fabric/ansible";
   
+  # Generate environment file for Ansible
+  ansibleEnvContent = ''
+    export ANSIBLE_CONFIG="${ansibleConfigDir}/ansible.cfg"
+    export ANSIBLE_INVENTORY="${ansibleConfigDir}/inventory/hosts.ini"
+    export ANSIBLE_ROLES_PATH="${ansibleConfigDir}/roles"
+  '';
+  
   # Default Ansible configuration
   defaultAnsibleConfig = {
     enable = false;
@@ -139,6 +146,7 @@ in {
     system.activationScripts.ansible-config = ''
       mkdir -p ${ansibleConfigDir}
       echo "${ansibleConfigContent}" > ${ansibleConfigDir}/ansible.cfg
+      echo "${ansibleEnvContent}" > /etc/profile.d/ansible.sh
     '';
     
     # Generate inventory if enabled

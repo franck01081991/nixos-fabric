@@ -12,6 +12,7 @@
           inherit system;
           modules = [
             ./modules/lib.nix
+            ./modules/dynamic.nix
             ./modules/base.nix
             ./modules/ssh.nix
             ./modules/nftables.nix

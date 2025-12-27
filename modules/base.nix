@@ -72,9 +72,11 @@
     console.keyMap = "fr";
     system.stateVersion = "25.11";
     
-    # Create config directory
+    # Create config directory and set environment
     system.activationScripts.configDir = lib.mkBefore ''
       mkdir -p /etc/nixos-fabric
+      echo "export NIXOS_FABRIC_CONFIG_DIR='/etc/nixos-fabric'" > /etc/profile.d/nixos-fabric.sh
+      echo "export NIXOS_FABRIC_ANSIBLE_DIR='$NIXOS_FABRIC_CONFIG_DIR/ansible'" >> /etc/profile.d/nixos-fabric.sh
     '';
   };
 }
