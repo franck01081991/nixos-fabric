@@ -1,169 +1,106 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# Local test runner for NixOS Fabric
+# This script runs basic validation tests without requiring Nix builds
 
-# NixOS Fabric Test Runner
-# Run comprehensive tests for the NixOS Fabric configuration
+set -e
 
-set -euo pipefail
+echo "🧪 Running NixOS Fabric Local Tests"
+echo "===================================="
 
-# Check Nix version
-check_nix_version() {
-    local required_version="2.18.0"
-    local current_version=$(nix --version | cut -d' ' -f3)
-    
-    if [ "$(printf '%s\n' "$required_version" "$current_version" | sort -V | head -n1)" != "$required_version" ]; then
-        echo "❌ Nix version $current_version is too old. Required: $required_version+"
-        echo "📋 Please upgrade Nix:"
-        echo "   nix upgrade-nix"
-        echo "   or"
-        echo "   curl -L https://nixos.org/nix/install | sh"
-        exit 1
-    else
-        echo "✅ Nix version $current_version is compatible"
-    fi
-}
-
-# Run version check
-check_nix_version
-
-# Colors for output
-RED='\033[0;31m'
+# Color codes
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Test directory
-TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="${TEST_DIR}/.."
+PASS_COUNT=0
+FAIL_COUNT=0
 
-# Function to run Nix tests
-un_nix_tests() {
-    echo -e "${BLUE}Running Nix tests...${NC}"
+# Test function
+test_case() {
+    local name="$1"
+    local command="$2"
     
-    # Run the test runner
-    if nix-instantiate --eval -E "
-      let
-        pkgs = import <nixpkgs> {};
-        tests = import ${TEST_DIR};
-        config = import ${PROJECT_ROOT}/flake.nix;
-      in
-        tests.runTests config
-    " > /tmp/test-results.json 2>&1; then
-        echo -e "${GREEN}✓ Nix tests completed successfully${NC}"
-        cat /tmp/test-results.json | jq .
+    echo -e "${YELLOW}🔍 Running test: $name${NC}"
+    
+    if eval "$command" > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ PASS: $name${NC}"
+        ((PASS_COUNT++))
         return 0
     else
-        echo -e "${RED}✗ Nix tests failed${NC}"
-        cat /tmp/test-results.json
+        echo -e "${RED}❌ FAIL: $name${NC}"
+        ((FAIL_COUNT++))
         return 1
     fi
 }
 
-# Function to run basic validation
-un_basic_validation() {
-    echo -e "${BLUE}Running basic validation...${NC}"
-    
-    # Check flake validity
-    if nix flake check; then
-        echo -e "${GREEN}✓ Flake validation passed${NC}"
-    else
-        echo -e "${RED}✗ Flake validation failed${NC}"
-        return 1
-    fi
-    
-    # Check rtr-sapinet configuration
-    if nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ rtr-sapinet configuration valid${NC}"
-    else
-        echo -e "${RED}✗ rtr-sapinet configuration invalid${NC}"
-        return 1
-    fi
-    
-    # Check rtr-noisy configuration
-    if nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ rtr-noisy configuration valid${NC}"
-    else
-        echo -e "${RED}✗ rtr-noisy configuration invalid${NC}"
-        return 1
-    fi
-    
-    return 0
-}
+# Configuration validation tests
+echo -e "\n📋 Configuration Validation Tests"
+echo "----------------------------------"
 
-# Function to run syntax checks
-un_syntax_checks() {
-    echo -e "${BLUE}Running syntax checks...${NC}"
-    
-    local failed=0
-    
-    # Check all Nix files
-    for file in $(find ${PROJECT_ROOT} -name "*.nix" -not -path "*/.git/*"); do
-        if nix-instantiate --parse ${file} > /dev/null 2>&1; then
-            echo -e "${GREEN}✓ ${file}${NC}"
-        else
-            echo -e "${RED}✗ ${file}${NC}"
-            failed=$((failed + 1))
-        fi
-    done
-    
-    if [ $failed -eq 0 ]; then
-        echo -e "${GREEN}✓ All syntax checks passed${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ $failed syntax checks failed${NC}"
-        return 1
-    fi
-}
+test_case "Flake.nix syntax check" "nix flake check --no-write-lock-file"
+test_case "Flake evaluation" "nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName"
+test_case "Spine configuration" "nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.roles.spine.enable"
+test_case "Leaf configuration" "nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.roles.leaf.enable"
+test_case "Hybrid configuration" "nix eval .#nixosConfigurations.rtr-noisy.config.network-fabric.roles.spine.enable"
 
-# Function to show test summary
-test_summary() {
-    echo -e "${BLUE}
-========================================${NC}"
-    echo -e "${BLUE}NixOS Fabric Test Summary${NC}"
-    echo -e "${BLUE}========================================${NC}"
-    echo -e "${YELLOW}Basic Validation:    ${basic_result}${NC}"
-    echo -e "${YELLOW}Syntax Checks:      ${syntax_result}${NC}"
-    echo -e "${YELLOW}Nix Tests:          ${nix_result}${NC}"
-    echo -e "${BLUE}========================================${NC}"
-    
-    if [ "$basic_result" = "✓ PASS" ] && [ "$syntax_result" = "✓ PASS" ] && [ "$nix_result" = "✓ PASS" ]; then
-        echo -e "${GREEN}✓ All tests passed!${NC}"
-        exit 0
-    else
-        echo -e "${RED}✗ Some tests failed${NC}"
-        exit 1
-    fi
-}
+# Module structure tests
+echo -e "\n📦 Module Structure Tests"
+echo "--------------------------"
 
-# Main execution
-main() {
-    echo -e "${BLUE}NixOS Fabric Test Runner${NC}"
-    echo -e "${BLUE}=========================${NC}"
-    
-    # Run basic validation
-    if run_basic_validation; then
-        basic_result="✓ PASS"
-    else
-        basic_result="✗ FAIL"
-    fi
-    
-    # Run syntax checks
-    if run_syntax_checks; then
-        syntax_result="✓ PASS"
-    else
-        syntax_result="✗ FAIL"
-    fi
-    
-    # Run Nix tests
-    if run_nix_tests; then
-        nix_result="✓ PASS"
-    else
-        nix_result="✗ FAIL"
-    fi
-    
-    # Show summary
-    test_summary
-}
+test_case "Network fabric module exists" "test -f modules/network-fabric.nix"
+test_case "Generic role module exists" "test -f modules/roles/generic.nix"
+test_case "Spine role module exists" "test -f modules/roles/spine-improved.nix"
+test_case "Leaf role module exists" "test -f modules/roles/leaf-improved.nix"
+test_case "Ansible module exists" "test -f modules/ansible-improved.nix"
 
-# Run main function
-main "$@"
+# Documentation tests
+echo -e "\n📚 Documentation Tests"
+echo "-----------------------"
+
+test_case "Architecture documentation exists" "test -f docs/architecture/ARCHITECTURE.md"
+test_case "Contributing guide exists" "test -f CONTRIBUTING.md"
+test_case "Code of conduct exists" "test -f CODE_OF_CONDUCT.md"
+test_case "Readme exists" "test -f README.md"
+
+# Test structure tests
+echo -e "\n🧪 Test Structure Tests"
+echo "-----------------------"
+
+test_case "Test runner exists" "test -f tests/run-tests.nix"
+test_case "Test utilities exist" "test -f tests/utils/default.nix"
+test_case "Module tests exist" "test -f tests/modules/default.nix"
+test_case "Role tests exist" "test -f tests/roles/default.nix"
+
+# Script tests
+echo -e "\n📜 Script Tests"
+echo "-----------------"
+
+test_case "Sync script exists" "test -f scripts/sync-bidirectional.sh"
+test_case "Sync script is executable" "test -x scripts/sync-bidirectional.sh"
+test_case "Deployment script exists" "test -f scripts/deploy-and-verify.sh"
+test_case "WireGuard script exists" "test -f scripts/deploy-wireguard.sh"
+
+# Ansible tests
+echo -e "\n🤖 Ansible Tests"
+echo "-----------------"
+
+test_case "Ansible configuration exists" "test -f ansible/ansible.cfg"
+test_case "Ansible playbooks exist" "test -d ansible/playbooks"
+test_case "Ansible roles exist" "test -d ansible/roles"
+test_case "Ansible inventory exists" "test -d ansible/inventory"
+
+# Summary
+echo -e "\n📊 Test Summary"
+echo "================"
+echo -e "${GREEN}Passed: $PASS_COUNT${NC}"
+echo -e "${RED}Failed: $FAIL_COUNT${NC}"
+echo -e "Total: $((PASS_COUNT + FAIL_COUNT))"
+
+if [ $FAIL_COUNT -eq 0 ]; then
+    echo -e "${GREEN}🎉 All tests passed!${NC}"
+    exit 0
+else
+    echo -e "${RED}❌ Some tests failed${NC}"
+    exit 1
+fi

@@ -24,7 +24,15 @@ This repository implements a **hybrid network fabric** where nodes can simultane
 
 ## 📖 Documentation
 
-### Individual Host Documentation
+### 📚 Comprehensive Architecture Guide
+
+- **[Architecture Overview](docs/architecture/ARCHITECTURE.md)** - Complete architectural documentation
+  - High-level and detailed architecture diagrams
+  - Component interactions and data flow
+  - Network topology and routing strategies
+  - Security architecture and access control
+
+### 📝 Individual Host Documentation
 
 Each host has comprehensive documentation:
 
@@ -40,7 +48,15 @@ Each host has comprehensive documentation:
   - Configuration management
   - Deployment workflow
 
-### Architecture and Deployment
+### 🛠️ Development Documentation
+
+- **[Contributing Guide](CONTRIBUTING.md)** - Complete contribution guidelines
+  - Development workflow and best practices
+  - Testing strategies and examples
+  - Documentation standards
+  - Code review process
+
+### 📦 Architecture and Deployment
 
 - [Deployment Guide](docs/deployment/DEPLOYMENT.md) - Step-by-step deployment
 - [Structure Reference](docs/reference/STRUCTURE.md) - Modular architecture

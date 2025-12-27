@@ -11,14 +11,17 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/network-fabric.nix  # Central fabric module
             ./modules/lib.nix
             ./modules/dynamic.nix
             ./modules/base.nix
             ./modules/ssh.nix
             ./modules/nftables.nix
-            ./modules/ansible.nix
-            ./modules/roles/spine.nix
-            ./modules/roles/leaf.nix
+            ./modules/security-improved.nix  # Improved security module
+            ./modules/ansible-improved.nix  # Improved Ansible integration
+            ./modules/roles/generic.nix    # Generic role functionality
+            ./modules/roles/spine-improved.nix  # Improved spine role
+            ./modules/roles/leaf-improved.nix   # Improved leaf role
 
             ./hosts/${hostname}/hardware-configuration.nix
             ./hosts/${hostname}/default.nix
