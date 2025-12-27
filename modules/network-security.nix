@@ -223,22 +223,22 @@ in {
         maxretry = 3;
       };
       
-      jails = {
-        sshd = {
-          enable = true;
-          port = sshPort;
-        };
-        
-        # Monitor WireGuard if enabled
-        ${lib.mkIf wgCfg.enable ''
+      jails = lib.mkMerge [
+        {
+          sshd = {
+            enable = true;
+            port = sshPort;
+          };
+        }
+        (lib.mkIf wgCfg.enable {
           wireguard = {
             enable = true;
             port = wgPort;
             filter = "wg";
             logpath = "/var/log/syslog";
           };
-        ''}
-      };
+        })
+      ];
     };
     
     # SSH hardening
