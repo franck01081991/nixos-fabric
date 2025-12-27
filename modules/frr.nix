@@ -127,16 +127,16 @@ in {
         
         # BGP configuration
         lib.mkIf cfg.bgp.enable ''
-        router bgp ${toString cfg.bgp.as}
-          bgp router-id ${cfg.bgp.routerId}
-          ${if cfg.bgp.clusterId then "bgp cluster-id ${cfg.bgp.clusterId}" else ""}
+        router bgp "${toString cfg.bgp.as}"
+          bgp router-id "${cfg.bgp.routerId}"
+          ${if cfg.bgp.clusterId then "bgp cluster-id \"${cfg.bgp.clusterId}\"" else ""}
           
           ${generateBGPNeighbors cfg.bgp.neighbors}
           
           ${lib.concatStringsSep "\n" (lib.map (af: 
             ''
-            address-family ${af}
-              ${lib.concatStringsSep "\n" (lib.map (network: "network ${network}") cfg.bgp.networks)}
+            address-family "${af}"
+              ${lib.concatStringsSep "\n" (lib.map (network: "network \"${network}\"") cfg.bgp.networks)}
               ${generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors)}
             exit-address-family
             ''
@@ -146,17 +146,17 @@ in {
         
         # EVPN configuration
         lib.mkIf cfg.evpn.enable ''
-        router bgp ${toString cfg.bgp.as} vrf default
+        router bgp "${toString cfg.bgp.as}" vrf default
           address-family l2vpn evpn
             neighbor ${lib.concatStringsSep " " cfg.evpn.neighbors} activate
           exit-address-family
         !
         ''
-        
+         
         # OSPF configuration
         lib.mkIf cfg.ospf.enable ''
         router ospf
-          ospf router-id ${cfg.ospf.routerId}
+          ospf router-id "${cfg.ospf.routerId}"
           ${generateOSPFNetworks cfg.ospf.networks}
           ${lib.concatStringsSep "\n" (lib.map (iface: "passive-interface ${iface}") cfg.ospf.passiveInterfaces)}
         !
