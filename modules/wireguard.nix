@@ -47,10 +47,9 @@ in {
       ips = cfg.ips;
       listenPort = cfg.listenPort;
       privateKeyFile = cfg.privateKeyFile;
-      peers = generatePeers cfg.peers;
       mtu = cfg.security.mtu;
       
-      # Apply persistent keepalive to all peers if configured
+      # Generate peers with persistent keepalive
       peers = lib.mapAttrs (name: peerConfig: 
         {
           publicKey = peerConfig.publicKey or "";

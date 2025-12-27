@@ -64,6 +64,7 @@ in {
     
     # Default gateway
     networking.defaultGateway = lib.mkIf cfg.defaultGateway.enable {
+      enable = true;
       address = cfg.defaultGateway.address;
       interface = cfg.defaultGateway.interface;
     };
