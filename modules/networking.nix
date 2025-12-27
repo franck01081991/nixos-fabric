@@ -14,7 +14,7 @@ let
     ) interfaces;
 
 in {
-  options.network-fabric.networking = {
+  options.network-fabric.network = {
     enable = lib.mkDefault false;
     
     # Basic network settings
