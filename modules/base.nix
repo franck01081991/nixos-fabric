@@ -52,11 +52,11 @@
   config = lib.mkForce {
     # Common packages
     environment.systemPackages = with pkgs; [
-      "git"
-      "curl"
-      "vim"
-      "wireguard-tools"
-      "frr"
+      git
+      curl
+      vim
+      wireguard-tools
+      frr
     ];
     
     # Common users
