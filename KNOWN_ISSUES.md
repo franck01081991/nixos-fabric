@@ -25,6 +25,7 @@ This document tracks known issues and planned improvements for the NixOS Fabric 
 - Check host configurations for conflicts
 - Verify flake module import order
 - Compare with working individual imports
+**Current error**: Syntax error in security-improved.nix preventing evaluation
 
 ### 3. Ansible Integration Complexity
 **Status**: Partially implemented
