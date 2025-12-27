@@ -26,6 +26,42 @@
     "kernel.dmesg_restrict" = 1;
     "kernel.perf_event_paranoid" = 3;
   };
+  
+  # Advanced nftables firewall
+  network-fabric.security.nftables-advanced = {
+    enable = true;
+    sshRateLimit = "5/minute";
+    icmpRateLimit = "3/sec";
+    enableLogging = true;
+  };
+  
+  # Auto-updates configuration
+  network-fabric.auto-updates = {
+    enable = true;
+    system = {
+      enable = true;
+      allowReboot = true;
+      dates = "*/7 * * *";  # Tous les 7 jours
+    };
+    security = {
+      enable = true;
+      checkInterval = "daily";
+      emailNotifications = false;
+    };
+    packages = {
+      enable = true;
+      updateInterval = "weekly";
+      packages = [
+        "wireguard-tools"
+        "frr"
+        "prometheus"
+        "node-exporter"
+        "grafana"
+        "sops"
+        "age"
+      ];
+    };
+  };
 
   # Fix systemd-networkd credentials issue
   systemd.services.systemd-networkd.serviceConfig = {
@@ -82,6 +118,36 @@
         DestinationPort = 4789;
         Learning = false;
       };
+    };
+  };
+  
+  # Enable lightweight monitoring for leaf node (exporters only)
+  network-fabric.monitoring = {
+    enable = true;
+    lightweightMode = true;
+    
+    # Optional: configure remote Prometheus server
+    # remotePrometheus = {
+    #   enable = true;
+    #   server = "monitoring.example.com";
+    #   port = 9090;
+    # };
+    
+    nodeExporter = {
+      enable = true;
+      port = 9100;
+      collectSystemdUnits = true;
+    };
+    
+    wireguardExporter = {
+      enable = true;
+      port = 9586;
+      interface = "wgtransport";
+    };
+    
+    frrExporter = {
+      enable = true;
+      port = 2605;
     };
   };
 
