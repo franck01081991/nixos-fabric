@@ -135,10 +135,9 @@ in {
     };
     
     # Security settings
-    # Security configuration is handled by the comprehensive security.nix module
+    # Security configuration is handled by the comprehensive security module
     # which provides SSH hardening, firewall, fail2ban, AppArmor, auditd, 
     # secret management, security updates, and system hardening features.
-    # Security configuration is handled by the comprehensive security module
     # under network-fabric.security-improved to avoid conflicts
   };
   

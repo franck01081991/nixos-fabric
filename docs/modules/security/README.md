@@ -52,10 +52,10 @@ See `examples/security-example.nix` for a comprehensive configuration with all f
 
 ## Configuration Options
 
-### `network-fabric.security.enable` (Boolean)
+### `network-fabric.security-improved.enable` (Boolean)
 Enable the security module. Default: `false`
 
-### `network-fabric.security.ssh` (Attribute Set)
+### `network-fabric.security-improved.ssh` (Attribute Set)
 SSH security configuration:
 - `enable`: Enable SSH service (default: `true`)
 - `port`: SSH port (default: `22`)
@@ -67,7 +67,7 @@ SSH security configuration:
 - `loginGraceTime`: Login grace time in seconds (default: `30`)
 - `banner`: SSH banner file (default: `"/etc/issue"`)
 
-### `network-fabric.security.firewall` (Attribute Set)
+### `network-fabric.security-improved.firewall` (Attribute Set)
 Firewall configuration:
 - `enable`: Enable firewall (default: `true`)
 - `allowedTCP`: List of allowed TCP ports
@@ -76,7 +76,7 @@ Firewall configuration:
 - `enableLogging`: Enable firewall logging (default: `true`)
 - `logLimit`: Log rate limit (default: `"10/sec"`)
 
-### `network-fabric.security.fail2ban` (Attribute Set)
+### `network-fabric.security-improved.fail2ban` (Attribute Set)
 Fail2ban configuration:
 - `enable`: Enable Fail2ban (default: `true`)
 - `bantime`: Ban duration in seconds (default: `3600`)
@@ -84,13 +84,13 @@ Fail2ban configuration:
 - `maxretry`: Maximum attempts before ban (default: `3`)
 - `jails`: Fail2ban jails configuration
 
-### `network-fabric.security.apparmor` (Attribute Set)
+### `network-fabric.security-improved.apparmor` (Attribute Set)
 AppArmor configuration:
 - `enable`: Enable AppArmor (default: `true`)
 - `profiles`: List of AppArmor profiles
 - `enforceMode`: Enable enforce mode (default: `true`)
 
-### `network-fabric.security.auditd` (Attribute Set)
+### `network-fabric.security-improved.auditd` (Attribute Set)
 Auditd configuration:
 - `enable`: Enable auditd (default: `true`)
 - `spaceLeft`: Disk space left percentage (default: `50`)
@@ -99,21 +99,21 @@ Auditd configuration:
 - `maxLogFile`: Maximum log file size (default: `50`)
 - `maxLogFileAction`: Action when max log file reached (default: `"rotate"`)
 
-### `network-fabric.security.secrets` (Attribute Set)
+### `network-fabric.security-improved.secrets` (Attribute Set)
 Secret management configuration:
 - `enable`: Enable secret management (default: `true`)
 - `backend`: Secret backend (default: `"age"`)
 - `keyFile`: Secret key file path
 - `configDir`: Secret configuration directory
 
-### `network-fabric.security.updates` (Attribute Set)
+### `network-fabric.security-improved.updates` (Attribute Set)
 Security updates configuration:
 - `enable`: Enable automatic updates (default: `true`)
 - `autoUpdate`: Automatically apply updates (default: `false`)
 - `checkInterval`: Update check interval (default: `"daily"`)
 - `emailNotifications`: Email for notifications
 
-### `network-fabric.security.hardening` (Attribute Set)
+### `network-fabric.security-improved.hardening` (Attribute Set)
 System hardening configuration:
 - `enable`: Enable system hardening (default: `true`)
 - `kernel`: Kernel hardening settings
@@ -201,7 +201,7 @@ network-fabric.security-improved = {
 ## Troubleshooting
 
 ### Module doesn't apply
-- Ensure `network-fabric.security.enable = true;`
+- Ensure `network-fabric.security-improved.enable = true;`
 - Check for syntax errors with `nix-instantiate --eval`
 - Verify module is imported in your configuration
 
