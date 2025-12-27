@@ -176,8 +176,7 @@ jobs:
     - name: Build configurations
       run: |
         echo "🏗️ Building configurations..."
-        nix build .#nixosConfigurations.rtr-sapinet-ci.config.system.build.toplevel --no-link
-        nix build .#nixosConfigurations.rtr-noisy-ci.config.system.build.toplevel --no-link
+        nix build .#nixosConfigurations.test-ci.config.system.build.toplevel --no-link
         echo "✅ All builds completed successfully"
 
   # ============================================
