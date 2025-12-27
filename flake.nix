@@ -19,6 +19,8 @@
             ./modules/nftables.nix
             ./modules/security/init.nix  # Comprehensive security module
             ./modules/ansible-improved.nix  # Improved Ansible integration
+            ./modules/auto-updates.nix     # Auto-updates configuration
+            ./modules/monitoring.nix      # Monitoring configuration
             ./modules/roles/generic.nix    # Generic role functionality
             ./modules/roles/spine-improved.nix  # Improved spine role
             ./modules/roles/leaf-improved.nix   # Improved leaf role

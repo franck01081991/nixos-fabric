@@ -25,7 +25,11 @@ let
   
 in {
   options.network-fabric.security.nftables-advanced = {
-    enable = lib.mkDefault false;
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable advanced nftables firewall";
+    };
     
     sshRateLimit = lib.mkOption {
       type = lib.types.str;
@@ -129,9 +133,7 @@ in {
           }
         }
         ''
-        
-        # Additional table for NAT (only for leaf nodes)
-        ${lib.mkIf isLeaf ''
+        lib.mkIf isLeaf ''
           table ip nat {
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
@@ -140,7 +142,7 @@ in {
               oifname "${wanInterface}" ip saddr { 10.10.10.0/24, 10.10.30.0/24, 10.10.40.0/24 } masquerade comment "MASQUERADE VLAN traffic to WAN"
             }
           }
-        ''}
+        ''
       ];
     };
   };
