@@ -397,8 +397,7 @@ in {
     };
     
     # AppArmor configuration
-    security.apparmor = lib.mkIf config.network-fabric.security.apparmor.enable {
-      enable = true;
+    security.apparmor.enable = lib.mkIf config.network-fabric.security.apparmor.enable true;
       
       # Generate AppArmor profiles
       system.activationScripts.apparmorProfiles = lib.mkBefore ''
@@ -498,9 +497,7 @@ EOL
                 monitor = "security";
               };
             }
-          ];
-        }
       ];
     };
-  };
+}
 }
