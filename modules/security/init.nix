@@ -7,6 +7,9 @@
 
 {
   imports = [
-    ./default.nix  # Main security module
+    ./default.nix    # Main security module
+    ./ssh.nix        # SSH security module
+    ./firewall.nix   # Firewall security module
+    ./hardening.nix  # System hardening module
   ];
 }
