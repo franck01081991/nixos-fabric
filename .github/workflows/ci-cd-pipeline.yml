@@ -494,9 +494,6 @@ jobs:
 #       ↓
 #    validate-documentation
 #       ↓
-# build-configurations → test-security → test-integration → prepare-deployment
-# ============================================
-=======
 # Pipeline Visualization (Optimized)
 # ============================================
 # validate-structure
