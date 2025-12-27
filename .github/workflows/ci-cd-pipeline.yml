@@ -74,8 +74,8 @@ jobs:
     - name: Validate basic configurations
       run: |
         echo "🔧 Validating basic configurations..."
-        nix eval .#nixosConfigurations.test.config.networking.hostName
-        nix eval .#nixosConfigurations.test-ci.config.networking.hostName
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.hostName
+        nix eval .#nixosConfigurations.rtr-noisy.config.networking.hostName
 
   # ============================================
   # JOB 3: Security Testing
@@ -99,8 +99,8 @@ jobs:
     - name: Test security configurations
       run: |
         echo "🔒 Testing security configurations..."
-        nix eval .#nixosConfigurations.test.config.networking.hostName
-        echo "Security tests adapted for minimal flake"
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.security.enable
+        nix eval .#nixosConfigurations.rtr-sapinet.config.services.openssh.settings.Port
 
   # ============================================
   # JOB 4: Network Testing
@@ -121,12 +121,15 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Test network configurations
+    - name: Test FRR configurations
       run: |
-        echo "🌐 Testing network configurations..."
-        nix eval .#nixosConfigurations.test.config.networking.hostName
-        nix eval .#nixosConfigurations.test-ci.config.boot.isContainer
-        echo "Network tests adapted for minimal flake"
+        echo "🌐 Testing FRR configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.frr.enable
+
+    - name: Test WireGuard configurations
+      run: |
+        echo "🔐 Testing WireGuard configurations..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.network-fabric.wireguard.enable
 
   # ============================================
   # JOB 5: Integration Testing
@@ -147,12 +150,10 @@ jobs:
       with:
         extra-conf: ${{ env.NIX_CONFIG }}
 
-    - name: Test configuration integration
+    - name: Test security and networking integration
       run: |
-        echo "🧪 Testing configuration integration..."
-        nix eval .#nixosConfigurations.test.config.networking.hostName
-        nix eval .#nixosConfigurations.test-ci.config.boot.isContainer
-        echo "Integration tests adapted for minimal flake"
+        echo "🧪 Testing security + networking integration..."
+        nix eval .#nixosConfigurations.rtr-sapinet.config.networking.firewall.allowedTCPPorts
 
   # ============================================
   # JOB 6: Build Configurations

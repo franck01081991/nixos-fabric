@@ -71,11 +71,22 @@
             })
           ] ++ (if ciMode then [ ./modules/ci-bootless.nix ] else []);
         };
+
+      # Import real router configurations if they exist
+      importRtrConfig = name: hostConfig:
+        if builtins.pathExists (./hosts/${name}/default.nix) then
+          (import ./hosts/${name}/default.nix).nixosConfigurations.${name}
+        else
+          null;
     in
     {
       nixosConfigurations = {
         test = mkHost { hostname = "test"; };
         test-ci = mkHost { hostname = "test-ci"; ciMode = true; };
-      };
+      } // builtins.listToAttrs (
+        map
+          (name: { name = name; value = importRtrConfig name {}; })
+          [ "rtr-sapinet" "rtr-noisy" ]
+      );
     };
 }
