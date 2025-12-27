@@ -83,7 +83,11 @@ in {
       type = lib.types.submodule {
         options = {
           domain = lib.mkDefault defaultFabricConfig.network.domain;
-          dnsServers = lib.mkDefault defaultFabricConfig.network.dnsServers;
+          dnsServers = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = defaultFabricConfig.network.dnsServers;
+            description = "DNS servers used by network-fabric";
+          };
           
           ipv4 = lib.mkOption {
             type = lib.types.submodule {
