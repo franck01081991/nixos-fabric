@@ -13,7 +13,7 @@ echo ""
 # Test 1: Module syntax validation
 echo "Test 1: Module Syntax Validation"
 echo "--------------------------------"
-if nix-instantiate --eval -E 'import ./modules/security-improved.nix' > /dev/null 2>&1; then
+if nix-instantiate --eval -E 'import ./modules/security/init.nix' > /dev/null 2>&1; then
     echo "✅ PASS: Module syntax is valid"
 else
     echo "❌ FAIL: Module syntax has errors"
@@ -24,7 +24,7 @@ echo ""
 # Test 2: Minimal configuration
 echo "Test 2: Minimal Configuration"
 echo "-----------------------------"
-if nix-instantiate --eval -E 'import ./tests/test-security-module.nix' > /dev/null 2>&1; then
+if nix-instantiate --eval -E 'import ./tests/modules/security/init.nix' > /dev/null 2>&1; then
     echo "✅ PASS: Minimal configuration works"
 else
     echo "❌ FAIL: Minimal configuration has errors"
@@ -35,7 +35,7 @@ echo ""
 # Test 3: Complete configuration
 echo "Test 3: Complete Configuration"
 echo "------------------------------"
-if nix eval -f ./tests/test-security-module.nix --json results.allTestsPassed 2>&1 | grep -q "true"; then
+if nix eval -f ./tests/modules/security/init.nix --json results.allTestsPassed 2>&1 | grep -q "true"; then
     echo "✅ PASS: Complete configuration works"
 else
     echo "❌ FAIL: Complete configuration has errors"
