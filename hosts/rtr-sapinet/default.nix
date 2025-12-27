@@ -40,6 +40,14 @@
   network-fabric.security-improved.apparmor.enable = true;
   network-fabric.security-improved.auditd.enable = true;
   
+  # Advanced nftables firewall
+  network-fabric.security.nftables-advanced = {
+    enable = true;
+    sshRateLimit = "5/minute";
+    icmpRateLimit = "3/sec";
+    enableLogging = true;
+  };
+  
   # Security hardening
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.rp_filter" = 1;
@@ -56,5 +64,30 @@
     "kernel.kptr_restrict" = 2;
     "kernel.dmesg_restrict" = 1;
     "kernel.perf_event_paranoid" = 3;
+  };
+  
+  # Auto-updates configuration
+  network-fabric.auto-updates = {
+    enable = true;
+    system = {
+      enable = true;
+      allowReboot = true;
+      dates = "*/7 * * *";  # Tous les 7 jours
+    };
+    security = {
+      enable = true;
+      checkInterval = "daily";
+      emailNotifications = false;
+    };
+    packages = {
+      enable = true;
+      updateInterval = "weekly";
+      packages = [
+        "wireguard-tools"
+        "frr"
+        "sops"
+        "age"
+      ];
+    };
   };
 }
