@@ -55,19 +55,26 @@ let
   };
   
   # Generate Ansible playbook runner
-  ansiblePlaybookRunner = pkgs.writeShellScriptBin "ansible-playbook-runner" ''
-    #!${pkgs.bash}/bin/bash
-    set -euo pipefail
-    
-    PLAYBOOK="${cfg.playbooks[0]}"
-    TARGET="${1:-all}"
-    
-    echo "Running Ansible playbook: $PLAYBOOK"
-    ${pkgs.ansible}/bin/ansible-playbook \
-      --inventory ${defaultAnsibleConfig.configOptions.defaults.inventory} \
-      --limit "$TARGET" \
-      "${config.network-fabric.base.configDir}/ansible/playbooks/$PLAYBOOK"
-  '';
+  ansiblePlaybookRunner = pkgs.writeScriptBin "ansible-playbook-runner" {
+    interpreter = "${pkgs.bash}/bin/bash";
+    text = ''
+      set -euo pipefail
+      
+      PLAYBOOK="${cfg.playbooks[0]}"
+    # Set target with default value using conditional
+    if [ $# -eq 0 ]; then
+      TARGET="all"
+    else
+      TARGET="$1"
+    fi
+      
+      echo "Running Ansible playbook: $PLAYBOOK"
+      ${pkgs.ansible}/bin/ansible-playbook \
+        --inventory ${defaultAnsibleConfig.configOptions.defaults.inventory} \
+        --limit "$TARGET" \
+        "${config.network-fabric.base.configDir}/ansible/playbooks/$PLAYBOOK"
+    '';
+  };
 
 in {
   options.network-fabric.ansible = {
@@ -113,7 +120,7 @@ in {
   config = lib.mkIf cfg.enable {
     # Install Ansible
     environment.systemPackages = with pkgs; [
-      (ansible_${cfg.version} // ansible)
+      ansible
       ansible-lint
     ];
     
@@ -157,8 +164,6 @@ in {
       ) cfg.groupVars
     );
     
-    # Provide Ansible playbook runner
-    environment.systemPackages = with pkgs; [ ansiblePlaybookRunner ];
     
     # Ensure Ansible can access NixOS configuration
     users.users.root.openssh.authorizedKeys.keys = [
