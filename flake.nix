@@ -11,8 +11,10 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
+            ./modules/base.nix
             ./modules/ssh.nix
             ./modules/nftables.nix
+            ./modules/ansible.nix
             ./modules/roles/spine.nix
             ./modules/roles/leaf.nix
 

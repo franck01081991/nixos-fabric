@@ -47,6 +47,9 @@ in {
         };
       };
     };
+    
+    # Configuration directory
+    configDir = lib.mkDefault "/etc/nixos-fabric";
   };
 
   config = lib.mkIf cfg.enable {
@@ -65,5 +68,8 @@ in {
     # Common system settings
     console.keyMap = cfg.system.console.keyMap;
     system.stateVersion = cfg.system.stateVersion;
+    
+    # Set configDir for other modules
+    network-fabric.base.configDir = cfg.configDir;
   };
 }

@@ -1,0 +1,28 @@
+# Ansible gitignore
+
+# Generated files
+*.retry
+*.log
+
+# Local inventory overrides
+inventory/hosts.local.ini
+
+# Ansible cache
+.cache/
+
+# Python virtual environment
+venv/
+.env/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# SSH keys and sensitive data
+*.key
+*.pem
+secrets/
+
+# Ansible vault files
+*.vault

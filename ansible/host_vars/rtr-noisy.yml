@@ -1,0 +1,24 @@
+# Ansible variables for rtr-noisy
+---
+
+# WireGuard configuration
+wireguard_address: "10.255.0.11/24"
+wireguard_endpoint: "RTR_NOISY_IP"
+peer_public_key: "BASE64_PUBLIC_KEY_HERE"
+peer_endpoint: "45.90.162.251"
+
+# FRR configuration
+frr_ospf_router_id: "10.254.0.11"
+frr_bgp_as_number: 65000
+
+# Network configuration
+fabric_networks:
+  - "10.254.0.0/24"
+  - "10.255.0.0/24"
+  - "fd42:1337:254::/64"
+
+# Role-specific settings
+node_role: "hybrid"
+hybrid_roles:
+  - "spine"
+  - "leaf"

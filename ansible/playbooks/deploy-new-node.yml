@@ -1,0 +1,71 @@
+# Playbook for deploying new fabric nodes
+---
+- name: Deploy new fabric node
+  hosts: all
+  become: true
+  gather_facts: true
+  
+  vars_prompt:
+    - name: "node_name"
+      prompt: "Enter the new node name"
+      private: no
+    - name: "node_role"
+      prompt: "Enter node role (spine/leaf/hybrid)"
+      private: no
+      default: "leaf"
+    - name: "node_ip"
+      prompt: "Enter node IP address"
+      private: no
+    - name: "wireguard_address"
+      prompt: "Enter WireGuard address (e.g., 10.255.0.X/24)"
+      private: no
+      default: "10.255.0.2/24"
+  
+  tasks:
+    - name: Add new node to inventory
+      ansible.builtin.add_host:
+        name: "{{ node_name }}"
+        groups: "{{ node_role }}"
+        ansible_host: "{{ node_ip }}"
+      delegate_to: localhost
+      run_once: true
+      
+    - name: Create host directory structure
+      ansible.builtin.file:
+        path: "../../hosts/{{ node_name }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+      
+    - name: Generate base configuration files
+      ansible.builtin.template:
+        src: "templates/host-base.nix.j2"
+        dest: "../../hosts/{{ node_name }}/base-variables.nix"
+      delegate_to: localhost
+      run_once: true
+      
+    - name: Generate role configuration
+      ansible.builtin.template:
+        src: "templates/role-{{ node_role }}.nix.j2"
+        dest: "../../hosts/{{ node_name }}/role-variables.nix"
+      delegate_to: localhost
+      run_once: true
+      
+    - name: Generate default configuration
+      ansible.builtin.template:
+        src: "templates/default.nix.j2"
+        dest: "../../hosts/{{ node_name }}/default.nix"
+      delegate_to: localhost
+      run_once: true
+      
+    - name: Update Ansible inventory
+      ansible.builtin.command: 
+        cmd: "./scripts/generate-ansible-inventory.sh"
+      delegate_to: localhost
+      run_once: true
+      changed_when: true
+      
+    - name: Deploy configuration to new node
+      ansible.builtin.import_playbook: main.yml
+      when: node_name in groups['all']

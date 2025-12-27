@@ -4,6 +4,7 @@
     ./hardware-configuration.nix
     ./base-variables.nix
     ./role-variables.nix
+    ../default-ansible.nix
   ];
 
   # System tweaks

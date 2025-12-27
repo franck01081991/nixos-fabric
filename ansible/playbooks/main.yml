@@ -1,0 +1,19 @@
+# Main Ansible Playbook for NixOS Fabric
+---
+- name: Configure NixOS Fabric Infrastructure
+  hosts: all
+  become: true
+  gather_facts: true
+  
+  roles:
+    - { role: base, tags: ['base', 'setup'] }
+    - { role: networking, tags: ['networking'] }
+    - { role: wireguard, tags: ['wireguard', 'vpn'] }
+    - { role: frr, tags: ['frr', 'routing'] }
+    - { role: security, tags: ['security'] }
+    - { role: monitoring, tags: ['monitoring'] }
+  
+  tasks:
+    - name: Verify fabric connectivity
+      import_tasks: verify-fabric.yml
+      tags: ['verify', 'check']
