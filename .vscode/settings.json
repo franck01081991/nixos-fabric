@@ -1,0 +1,57 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.gitattributes": true,
+    "**/.gitignore": true,
+    "**/.gitmodules": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true,
+    "**/*.swp": true,
+    "**/*.swo": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "nix.enable": true,
+  "nix.nixPath": "nixpkgs=/home/franck/src/nixos-fabric",
+  "nix.maxMemoryGB": 8,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[nix]": {
+    "editor.defaultFormatter": "jnoortheen.nix-ide"
+  },
+  "workbench.iconTheme": "material-icon-theme",
+  "explorer.compactFolders": false,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": false,
+  "workbench.colorTheme": "Default Dark+",
+  "terminal.integrated.shell.linux": "/run/current-system/sw/bin/bash",
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "extensions.recommendations": [
+    "jnoortheen.nix-ide",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-nix",
+    "redhat.ansible",
+    "ms-python.python",
+    "eamodio.gitlens",
+    "PKief.material-icon-theme"
+  ],
+  "nix.indentationRules": {
+    "indent": 2,
+    "continuationIndent": 2
+  },
+  "nix.formattingOptions": {
+    "insertSpaces": true,
+    "tabSize": 2
+  }
+}

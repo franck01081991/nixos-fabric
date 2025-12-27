@@ -1,0 +1,179 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Deploy WireGuard + BGP EVPN configuration
+  hosts: rtr-sapinet:rtr-noisy
+  become: true
+  vars:
+    wg_mtu: 1420
+    bgp_as: 65000
+    wg_port: 51820
+    monitoring_enabled: true
+    
+  tasks:
+    - name: Install required packages
+      ansible.builtin.package:
+        name:
+          - wireguard-tools
+          - frr
+          - prometheus
+          - node_exporter
+          - grafana
+          - sops
+          - age
+        state: present
+      when: ansible_os_family == 'Debian' or ansible_os_family == 'RedHat'
+      
+    - name: Create WireGuard directory
+      ansible.builtin.file:
+        path: /etc/wireguard
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+      
+    - name: Generate WireGuard keys
+      ansible.builtin.command: |
+        wg genkey | tee /etc/wireguard/{{ inventory_hostname }}.key | wg pubkey > /etc/wireguard/{{ inventory_hostname }}.pub
+      args:
+        creates: /etc/wireguard/{{ inventory_hostname }}.key
+      
+    - name: Set secure permissions for WireGuard keys
+      ansible.builtin.file:
+        path: /etc/wireguard/{{ inventory_hostname }}.key
+        mode: '0600'
+        owner: root
+        group: root
+      
+    - name: Fetch public keys from all hosts
+      ansible.builtin.slurp:
+        src: /etc/wireguard/{{ inventory_hostname }}.pub
+      register: wg_pubkey
+      
+    - name: Set public key fact
+      ansible.builtin.set_fact:
+        wg_public_key: "{{ wg_pubkey.content | b64decode | trim }}"
+      
+    - name: Create secrets directory
+      ansible.builtin.file:
+        path: /etc/nixos/secrets
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+      
+    - name: Generate age key
+      ansible.builtin.command: age-keygen -o /etc/nixos/secrets/age.key
+      args:
+        creates: /etc/nixos/secrets/age.key
+      
+    - name: Extract age public key
+      ansible.builtin.command: grep -oP 'public key: \K.*' /etc/nixos/secrets/age.key
+      register: age_public_key
+      changed_when: false
+      
+    - name: Create initial secrets file
+      ansible.builtin.template:
+        src: templates/wireguard-secrets.yaml.j2
+        dest: /etc/nixos/secrets/wireguard.yaml
+        mode: '0600'
+        owner: root
+        group: root
+      
+    - name: Encrypt secrets with sops
+      ansible.builtin.command: |
+        sops --age {{ age_public_key.stdout }} --encrypt --in-place /etc/nixos/secrets/wireguard.yaml
+      
+    - name: Rename encrypted file
+      ansible.builtin.command: mv /etc/nixos/secrets/wireguard.yaml /etc/nixos/secrets/wireguard.sops.yaml
+      
+    - name: Configure WireGuard
+      ansible.builtin.template:
+        src: templates/wireguard.nix.j2
+        dest: /etc/nixos/wireguard.nix
+        mode: '0644'
+      
+    - name: Configure BGP
+      ansible.builtin.template:
+        src: templates/frr.nix.j2
+        dest: /etc/nixos/frr.nix
+        mode: '0644'
+      
+    - name: Configure monitoring (only on rtr-noisy)
+      ansible.builtin.template:
+        src: templates/monitoring.nix.j2
+        dest: /etc/nixos/monitoring.nix
+        mode: '0644'
+      when: inventory_hostname == 'rtr-noisy'
+      
+    - name: Configure nftables
+      ansible.builtin.template:
+        src: templates/nftables.nix.j2
+        dest: /etc/nixos/nftables.nix
+        mode: '0644'
+      
+    - name: Configure secrets management
+      ansible.builtin.template:
+        src: templates/secrets.nix.j2
+        dest: /etc/nixos/secrets.nix
+        mode: '0644'
+      
+    - name: Apply NixOS configuration
+      ansible.builtin.command: nixos-rebuild switch
+      register: nixos_result
+      changed_when: '"building" in nixos_result.stdout'
+      
+    - name: Verify WireGuard
+      ansible.builtin.command: wg show
+      register: wg_status
+      changed_when: false
+      
+    - name: Verify BGP
+      ansible.builtin.command: vtysh -c "show bgp summary"
+      register: bgp_status
+      changed_when: false
+      
+    - name: Verify VLAN (only on rtr-noisy)
+      ansible.builtin.command: bridge vlan show
+      register: vlan_status
+      changed_when: false
+      when: inventory_hostname == 'rtr-noisy'
+      
+    - name: Display verification results
+      ansible.builtin.debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          WireGuard: {{ 'OK' if 'interface: wgtransport' in wg_status.stdout else 'FAILED' }}
+          BGP: {{ 'OK' if 'Established' in bgp_status.stdout else 'FAILED' }}
+          VLAN: {{ 'OK' if (inventory_hostname == 'rtr-noisy' and 'br0' in vlan_status.stdout) or inventory_hostname != 'rtr-noisy' else 'FAILED' }}
+      
+  handlers:
+    - name: Restart WireGuard
+      ansible.builtin.systemd:
+        name: wg-quick@wgtransport
+        state: restarted
+        enabled: yes
+      
+    - name: Restart FRR
+      ansible.builtin.systemd:
+        name: frr
+        state: restarted
+        enabled: yes
+      
+    - name: Restart Prometheus
+      ansible.builtin.systemd:
+        name: prometheus
+        state: restarted
+        enabled: yes
+      
+    - name: Restart Node Exporter
+      ansible.builtin.systemd:
+        name: node-exporter
+        state: restarted
+        enabled: yes
+      
+    - name: Restart Grafana
+      ansible.builtin.systemd:
+        name: grafana
+        state: restarted
+        enabled: yes
+      when: inventory_hostname == 'rtr-noisy'

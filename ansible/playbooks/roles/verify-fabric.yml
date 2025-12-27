@@ -1,0 +1,80 @@
+# Fabric Verification Playbook
+---
+- name: Verify WireGuard connectivity
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check WireGuard interface
+      ansible.builtin.command: ip link show wgtransport
+      register: wg_interface
+      ignore_errors: true
+      changed_when: false
+
+    - name: Display WireGuard status
+      ansible.builtin.debug:
+        msg: "WireGuard interface {{ 'exists' if wg_interface.rc == 0 else 'not found' }}"
+
+    - name: Check WireGuard peers
+      ansible.builtin.command: sudo wg show wgtransport
+      register: wg_peers
+      ignore_errors: true
+      changed_when: false
+      when: wg_interface.rc == 0
+
+    - name: Display WireGuard peers
+      ansible.builtin.debug:
+        var: wg_peers.stdout_lines
+      when: wg_peers is defined and wg_peers.stdout
+
+- name: Verify routing
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check BGP status
+      ansible.builtin.command: vtysh -c "show ip bgp summary"
+      register: bgp_status
+      ignore_errors: true
+      changed_when: false
+
+    - name: Display BGP status
+      ansible.builtin.debug:
+        var: bgp_status.stdout_lines
+      when: bgp_status is defined and bgp_status.stdout
+
+    - name: Check OSPF status
+      ansible.builtin.command: vtysh -c "show ip ospf neighbor"
+      register: ospf_status
+      ignore_errors: true
+      changed_when: false
+
+    - name: Display OSPF status
+      ansible.builtin.debug:
+        var: ospf_status.stdout_lines
+      when: ospf_status is defined and ospf_status.stdout
+
+- name: Verify connectivity
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Test connectivity to known peers
+      ansible.builtin.command: ping -c 1 -W 1 {{ item }}
+      register: ping_result
+      ignore_errors: true
+      changed_when: false
+      loop:
+        - "10.255.0.1"
+        - "10.255.0.2"
+        - "10.254.0.1"
+        - "10.254.0.2"
+
+    - name: Display connectivity results
+      ansible.builtin.debug:
+        msg: "{{ item.item }} is {{ 'reachable' if item.rc == 0 else 'not reachable' }}"
+      loop: "{{ ping_result.results }}"
+      when: ping_result is defined
