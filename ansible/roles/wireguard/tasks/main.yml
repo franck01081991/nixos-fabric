@@ -19,6 +19,28 @@
   changed_when: false
   when: wg_private_key is defined and wg_private_key.stdout
   
+- name: Set WireGuard variables
+  ansible.builtin.set_fact:
+    wg_ip_address: "10.255.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/24"
+    wg_port: 51820
+    wg_mtu: 1420
+    wg_peers:
+      - public_key: "{{ hostvars['rtr-noisy'].wg_public_key if inventory_hostname == 'rtr-sapinet' else hostvars['rtr-sapinet'].wg_public_key }}"
+        allowed_ips:
+          - "10.255.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}/32"
+          - "10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}/32"
+        endpoint: "45.90.162.251:{{ wg_port }}"
+        persistent_keepalive: 25
+    wireguard_peers:
+      - name: "rtr-noisy"
+        public_key: "{{ hostvars['rtr-noisy'].wg_public_key }}"
+        allowed_ips: ["10.255.0.11/32", "10.254.0.11/32"]
+        endpoint: "45.90.162.251"
+      - name: "rtr-sapinet"
+        public_key: "{{ hostvars['rtr-sapinet'].wg_public_key }}"
+        allowed_ips: ["10.255.0.1/32", "10.254.0.1/32"]
+        endpoint: "45.90.162.250"
+  
 - name: Create WireGuard secrets file
   ansible.builtin.template:
     src: wireguard-secrets.j2

@@ -5,7 +5,7 @@
     enable = true;
     bgpd.enable = true;
     ospfd.enable = true;
-    
+
     config = lib.concatStringsSep "\n" [
       ''
       frr defaults traditional
@@ -13,38 +13,49 @@
       service integrated-vtysh-config
       log syslog informational
       ''
-      
+
       ''
       router bgp {{ bgp_as }}
-        bgp router-id 10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}
-        {% if inventory_hostname == 'rtr-noisy' %}
-        bgp cluster-id 10.254.0.11
+        bgp router-id {{ bgp_router_id }}
+        {% if bgp_cluster_id is defined %}
+        bgp cluster-id {{ bgp_cluster_id }}
         {% endif %}
-        
-        neighbor 10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }} remote-as {{ bgp_as }}
-        neighbor 10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }} update-source lo
-        neighbor 10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }} ebgp-multihop 5
-        
+
+        {% for neighbor in bgp_neighbors %}
+        neighbor {{ neighbor.ip }} remote-as {{ neighbor.as }}
+        neighbor {{ neighbor.ip }} update-source lo
+        neighbor {{ neighbor.ip }} ebgp-multihop {{ neighbor.ebgp_multihop | default(5) }}
+        {% endfor %}
+
         address-family ipv4 unicast
-          network 10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32
-          neighbor 10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }} activate
+          {% for network in bgp_networks %}
+          network {{ network }}
+          {% endfor %}
+          {% for neighbor in bgp_neighbors %}
+          neighbor {{ neighbor.ip }} activate
+          {% endfor %}
         exit-address-family
-        
-        {% if inventory_hostname == 'rtr-noisy' %}
+
+        {% if bgp_evpn_enabled | default(false) %}
         address-family l2vpn evpn
-          neighbor 10.254.0.1 activate
+          {% for neighbor in bgp_neighbors %}
+          neighbor {{ neighbor.ip }} activate
+          {% endfor %}
         exit-address-family
         {% endif %}
       !
       ''
-      
+
       ''
       router ospf
-        ospf router-id 10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}
-        network 10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32 area 0
-        network 10.255.0.0/24 area 0
+        ospf router-id {{ ospf_router_id }}
+        {% for network in ospf_networks %}
+        network {{ network }} area {{ ospf_area | default(0) }}
+        {% endfor %}
         passive-interface default
-        passive-interface wgtransport
+        {% for interface in ospf_passive_interfaces | default([]) %}
+        passive-interface {{ interface }}
+        {% endfor %}
       !
       ''
     ];

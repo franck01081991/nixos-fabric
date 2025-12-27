@@ -1,0 +1,27 @@
+# FRR configuration for NixOS fabric
+---
+- name: Set FRR variables
+  ansible.builtin.set_fact:
+    bgp_as: 65001
+    bgp_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
+    bgp_cluster_id: "10.254.0.11"
+    bgp_neighbors:
+      - ip: "10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}"
+        as: 65001
+        ebgp_multihop: 5
+    bgp_networks:
+      - "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32"
+    bgp_evpn_enabled: "{{ inventory_hostname == 'rtr-noisy' }}"
+    ospf_router_id: "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}"
+    ospf_networks:
+      - "10.254.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/32"
+      - "10.255.0.0/24"
+    ospf_area: 0
+    ospf_passive_interfaces:
+      - "wgtransport"
+
+- name: Configure FRR
+  ansible.builtin.template:
+    src: frr.nix.j2
+    dest: /etc/nixos/frr.nix
+    mode: '0644'

@@ -82,6 +82,25 @@ main() {
   
   log_info "Starting test suite..."
   
+  # Quick tests (run in --quick mode)
+  if [ "$QUICK" = true ]; then
+    run_test "wireguard-config" "tests/wireguard-config-test.nix" "WireGuard configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "frr-config" "tests/frr-config-test.nix" "FRR configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "wireguard-wg0" "tests/wireguard-wg0-test.nix" "WireGuard wg0 configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "wireguard-secrets" "tests/wireguard-secrets-test.nix" "WireGuard secrets configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+  fi
+  
   # WireGuard tests
   if [ "$QUICK" = false ]; then
     run_test "wireguard-interface" "tests/wireguard-interface-test.nix" "WireGuard interface configuration"
@@ -153,6 +172,25 @@ main() {
     [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
     
     run_test "monitoring-exporters" "tests/monitoring-exporters-test.nix" "Exporters configuration"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+  fi
+
+  # New configuration tests
+  if [ "$QUICK" = false ]; then
+    run_test "wireguard-config" "tests/wireguard-config-test.nix" "WireGuard configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "frr-config" "tests/frr-config-test.nix" "FRR configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "wireguard-wg0" "tests/wireguard-wg0-test.nix" "WireGuard wg0 configuration test"
+    total_tests=$((total_tests + 1))
+    [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
+    
+    run_test "wireguard-secrets" "tests/wireguard-secrets-test.nix" "WireGuard secrets configuration test"
     total_tests=$((total_tests + 1))
     [ $? -eq 0 ] && passed_tests=$((passed_tests + 1)) || failed_tests=$((failed_tests + 1))
   fi

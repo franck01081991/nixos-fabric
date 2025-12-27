@@ -3,22 +3,21 @@
 {
   networking.wireguard.interfaces.wgtransport = {
     privateKeyFile = "/etc/wireguard/{{ inventory_hostname }}.key";
-    listenPort = {{ wg_port }};
-    mtu = {{ wg_mtu }};
-    ips = [ "10.255.0.{{ '1' if inventory_hostname == 'rtr-sapinet' else '11' }}/24" ];
+    listenPort = {{ wg_port | default(51820) }};
+    mtu = {{ wg_mtu | default(1420) }};
+    ips = [ "{{ wg_ip_address }}" ];
     
     peers = [
+      {% for peer in wg_peers %}
       {
-        publicKey = "{{ hostvars['rtr-noisy'].wg_public_key if inventory_hostname == 'rtr-sapinet' else hostvars['rtr-sapinet'].wg_public_key }}";
-        allowedIPs = [
-          "10.255.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}/32"
-          "10.254.0.{{ '11' if inventory_hostname == 'rtr-sapinet' else '1' }}/32"
-        ];
-        {% if inventory_hostname == 'rtr-noisy' %}
-        endpoint = "45.90.162.251:{{ wg_port }}";
-        persistentKeepalive = 25;
+        publicKey = "{{ peer.public_key }}";
+        allowedIPs = {{ peer.allowed_ips | to_json }};
+        {% if peer.endpoint is defined %}
+        endpoint = "{{ peer.endpoint }}:{{ wg_port | default(51820) }}";
+        persistentKeepalive = {{ peer.persistent_keepalive | default(25) }};
         {% endif %}
       }
+      {% endfor %}
     ];
   };
 }

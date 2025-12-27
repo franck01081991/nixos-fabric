@@ -1,0 +1,17 @@
+galaxy_info:
+  author: Franck
+  description: FRR configuration for NixOS fabric
+  company: NixOS Fabric
+  license: MIT
+  min_ansible_version: 2.15
+  platforms:
+    - name: NixOS
+      versions:
+        - all
+  galaxy_tags:
+    - networking
+    - frr
+    - bgp
+    - ospf
+
+dependencies: []
