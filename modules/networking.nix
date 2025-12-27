@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.network-fabric.networking || {};
+  cfg = if config.network-fabric ? networking then config.network-fabric.networking else {};
   
   # Generate interface configurations
   generateInterfaces = interfaces: 
