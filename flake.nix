@@ -23,7 +23,11 @@
                   enable = lib.mkDefault false;
                   hostName = lib.mkDefault "nixos-fabric";
                   domain = lib.mkDefault "fabric.local";
-                  dnsServers = lib.mkDefault [ "1.1.1.1" "8.8.8.8" ];
+                  dnsServers = lib.mkOption {
+                    type = with lib.types; listOf str;
+                    default = [ "1.1.1.1" "8.8.8.8" ];
+                    description = "DNS servers used by network-fabric";
+                  };
                 };
               };
               default = {};
