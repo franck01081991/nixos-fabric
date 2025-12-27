@@ -20,10 +20,11 @@
       listenPort = 51820;
       privateKeyFile = "/etc/wireguard/rtr-noisy.key";
       ips = [ "10.255.0.11/24" ];
+      mtu = 1420;  # Safe MTU for WireGuard over Internet
       
       peers = {
         rtr-sapinet = {
-          publicKey = "__SAPINET_PUB__";
+          publicKey = "__RTR_SAPINET_PUB__";
           endpoint = "45.90.162.251:51820";
           allowedIPs = [ "10.255.0.1/32" "10.254.0.1/32" ];
           persistentKeepalive = 25;

@@ -38,24 +38,13 @@
       listenPort = 51820;
       privateKeyFile = "/etc/wireguard/rtr-sapinet.key";
       ips = [ "10.255.0.1/24" "fd42:1337:255::1/64" ];
+      mtu = 1420;  # Safe MTU for WireGuard over Internet
       
       peers = {
         rtr-noisy = {
-          publicKey = "__NOISY_PUB__";
-          endpoint = "__NOISY_ENDPOINT__:51820";
-          allowedIPs = [ "10.255.0.2/32" "fd42:1337:255::2/128" "10.254.0.2/32" "fd42:1337:254::2/128" ];
-          persistentKeepalive = 25;
-        };
-        bondy = {
-          publicKey = "__BONDY_PUB__";
-          endpoint = "__BONDY_ENDPOINT__:51820";
-          allowedIPs = [ "10.255.0.3/32" "fd42:1337:255::3/128" "10.254.0.3/32" "fd42:1337:254::3/128" ];
-          persistentKeepalive = 25;
-        };
-        lepre = {
-          publicKey = "__LEPRE_PUB__";
-          endpoint = "__LEPRE_ENDPOINT__:51820";
-          allowedIPs = [ "10.255.0.4/32" "fd42:1337:255::4/128" "10.254.0.4/32" "fd42:1337:254::4/128" ];
+          publicKey = "__RTR_NOISY_PUB__";
+          endpoint = "45.90.162.251:51820";  # rtr-noisy will initiate to this public endpoint
+          allowedIPs = [ "10.255.0.11/32" "10.254.0.11/32" ];
           persistentKeepalive = 25;
         };
       };
@@ -71,30 +60,16 @@
         
         neighbors = {
           rtr-noisy = {
-            ip = "10.254.0.2";
+            ip = "10.254.0.11";
             as = 65000;
             updateSource = "lo";
             ebgpMultihop = 5;
-            addressFamilies = [ "ipv4 unicast" ];
-          };
-          bondy = {
-            ip = "10.254.0.3";
-            as = 65000;
-            updateSource = "lo";
-            ebgpMultihop = 5;
-            addressFamilies = [ "ipv4 unicast" ];
-          };
-          lepre = {
-            ip = "10.254.0.4";
-            as = 65103;
-            updateSource = "lo";
-            ebgpMultihop = 5;
-            addressFamilies = [ "ipv4 unicast" ];
+            addressFamilies = [ "ipv4 unicast" "l2vpn evpn" ];
           };
         };
         
         networks = [ "10.254.0.1/32" ];
-        addressFamilies = [ "ipv4 unicast" ];
+        addressFamilies = [ "ipv4 unicast" "l2vpn evpn" ];
       };
       
       ospf = {
@@ -103,6 +78,11 @@
         area = 0;
         networks = [ "10.254.0.1/32" "10.255.0.0/24" ];
         passiveInterfaces = [ "default" "wgtransport" ];
+      };
+      
+      evpn = {
+        enable = true;
+        neighbors = [ "10.254.0.11" ];
       };
     };
 

@@ -94,6 +94,15 @@ in {
         !
         ''
         
+        # EVPN configuration
+        lib.mkIf cfg.evpn.enable ''
+        router bgp ${toString cfg.bgp.as} vrf default
+          address-family l2vpn evpn
+            neighbor ${lib.concatStringsSep " " cfg.evpn.neighbors} activate
+          exit-address-family
+        !
+        ''
+        
         # OSPF configuration
         lib.mkIf cfg.ospf.enable ''
         router ospf
