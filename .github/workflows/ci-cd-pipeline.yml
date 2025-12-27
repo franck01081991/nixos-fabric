@@ -40,10 +40,10 @@ jobs:
     - name: Check basic structure
       run: |
         echo "📁 Checking basic structure..."
-        test -f modules/network-fabric.nix && echo "✅ network-fabric.nix exists"
-        test -f modules/frr.nix && echo "✅ frr.nix exists"
-        test -f modules/wireguard.nix && echo "✅ wireguard.nix exists"
-        test -f modules/network-security.nix && echo "✅ network-security.nix exists"
+        test -f modules/core/network-fabric.nix && echo "✅ network-fabric.nix exists"
+        test -f modules/networking/frr.nix && echo "✅ frr.nix exists"
+        test -f modules/networking/wireguard.nix && echo "✅ wireguard.nix exists"
+        test -f modules/security/network-security.nix && echo "✅ network-security.nix exists"
 
     - name: Validate flake (evaluation only)
       run: |

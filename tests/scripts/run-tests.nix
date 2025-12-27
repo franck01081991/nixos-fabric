@@ -8,11 +8,11 @@ let
   # Import test utilities
   testUtils = import ./utils/default.nix { inherit pkgs; };
   
-  # Test modules
-  fabricTests = import ./modules/default.nix { inherit pkgs testUtils; };
-  roleTests = import ./roles/default.nix { inherit pkgs testUtils; };
-  ansibleTests = import ./ansible/default.nix { inherit pkgs testUtils; };
-  integrationTests = import ./integration/default.nix { inherit pkgs testUtils; };
+  # Test modules - Updated for new structure
+  fabricTests = import ./modules/core/network-fabric.nix { inherit pkgs testUtils; };
+  roleTests = import ./modules/networking/roles/generic.nix { inherit pkgs testUtils; };
+  ansibleTests = import ./modules/integration/ansible.nix { inherit pkgs testUtils; };
+  integrationTests = import ./modules/security/network-security.nix { inherit pkgs testUtils; };
   
   # All tests
   allTests = [

@@ -6,9 +6,9 @@
 
 {
   imports = [
-    ../modules/network-fabric.nix
-    ../modules/frr.nix
-    ../modules/wireguard.nix
+    ../modules/core/network-fabric.nix
+    ../modules/networking/frr.nix
+    ../modules/networking/wireguard.nix
     ../modules/security/init.nix
   ];
 

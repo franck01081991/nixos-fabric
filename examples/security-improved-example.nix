@@ -7,7 +7,7 @@
 
 {
   imports = [
-    ./modules/security-improved.nix  # Import the improved security module
+    ./modules/security/init.nix  # Import the comprehensive security module
   ];
 
   # Network fabric configuration
