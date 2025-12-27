@@ -16,9 +16,9 @@ echo "Test 1: Security Module Structure"
 echo "----------------------------------"
 if [ -f "modules/security/init.nix" ] && \
    [ -f "modules/security/default.nix" ] && \
-   [ -f "modules/security/README.md" ] && \
+   [ -f "docs/modules/security/README.md" ] && \
    [ -f "modules/security/index.nix" ] && \
-   [ -f "modules/security/QUICKSTART.md" ]; then
+   [ -f "docs/modules/security/QUICKSTART.md" ]; then
     echo "✅ PASS: Security module structure is organized"
 else
     echo "❌ FAIL: Security module structure issues"
@@ -73,7 +73,7 @@ echo ""
 # Test 6: Repository Structure
 echo "Test 6: Repository Structure"
 echo "-----------------------------"
-if [ -f "STRUCTURE.md" ] && \
+if [ -f "docs/reference/STRUCTURE.md" ] && \
    [ -d "modules/security" ] && \
    [ -d "tests/modules/security" ] && \
    [ -d "examples" ]; then
@@ -88,10 +88,10 @@ echo ""
 echo "Test 7: Documentation Completeness"
 echo "-----------------------------------"
 doc_files=(
-    "modules/security/README.md"
-    "modules/security/QUICKSTART.md"
+    "docs/modules/security/README.md"
+    "docs/modules/security/QUICKSTART.md"
     "modules/security/index.nix"
-    "STRUCTURE.md"
+    "docs/reference/STRUCTURE.md"
 )
 
 missing_docs=0
