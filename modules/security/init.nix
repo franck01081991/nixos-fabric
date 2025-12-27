@@ -11,5 +11,6 @@
     ./ssh.nix        # SSH security module
     ./firewall.nix   # Firewall security module
     ./hardening.nix  # System hardening module
+    ./nftables-advanced.nix  # Advanced nftables firewall
   ];
 }
