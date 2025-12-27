@@ -126,23 +126,29 @@ in {
         ''}
         
         # BGP configuration
-        lib.mkIf cfg.bgp.enable ''
-        router bgp "${toString cfg.bgp.as}"
-          bgp router-id "${cfg.bgp.routerId}"
-          ${if cfg.bgp.clusterId then "bgp cluster-id \"${cfg.bgp.clusterId}\"" else ""}
-          
-          ${generateBGPNeighbors cfg.bgp.neighbors}
-          
-          ${lib.concatStringsSep "\n" (lib.map (af: 
-            ''
-            address-family "${af}"
-              ${lib.concatStringsSep "\n" (lib.map (network: "network \"${network}\"") cfg.bgp.networks)}
-              ${generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors)}
-            exit-address-family
-            ''
-          ) cfg.bgp.addressFamilies)}
-        !
-        ''
+        lib.mkIf cfg.bgp.enable (lib.concatStringsSep "\n" (
+          [
+            "router bgp ${toString cfg.bgp.as}"
+            "  bgp router-id ${cfg.bgp.routerId}"
+          ]
+          ++ (if cfg.bgp.clusterId then [ "  bgp cluster-id ${cfg.bgp.clusterId}" ] else [])
+          ++ [
+            # generateBGPNeighbors already returns a string, include it directly
+            generateBGPNeighbors cfg.bgp.neighbors
+          ]
+          ++ [
+            # Address-family blocks: build each AF with concatStrings so we don't create nested '' blocks
+            lib.concatStringsSep "\n" (lib.map (af:
+              lib.concatStringsSep "\n" (
+                [ "  address-family ${af}" ]
+                ++ (lib.map (network: "    network ${network}") cfg.bgp.networks)
+                ++ [ generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors) ]
+                ++ [ "  exit-address-family" ]
+              )
+            ) cfg.bgp.addressFamilies)
+          ]
+          ++ [ "!" ]
+        ))
         
         # EVPN configuration
         lib.mkIf cfg.evpn.enable ''
