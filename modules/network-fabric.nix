@@ -88,8 +88,8 @@ in {
           ipv4 = mkOption {
             type = submodule {
               options = {
-                prefix = mkDefault defaultFabricConfig.network.ipv4.prefix;
-                gateway = mkDefault defaultFabricConfig.network.ipv4.gateway;
+                prefix = lib.mkDefault defaultFabricConfig.network.ipv4.prefix;
+                gateway = lib.mkDefault defaultFabricConfig.network.ipv4.gateway;
               };
             };
           };
@@ -97,8 +97,8 @@ in {
           ipv6 = mkOption {
             type = submodule {
               options = {
-                prefix = mkDefault defaultFabricConfig.network.ipv6.prefix;
-                gateway = mkDefault defaultFabricConfig.network.ipv6.gateway;
+                prefix = lib.mkDefault defaultFabricConfig.network.ipv6.prefix;
+                gateway = lib.mkDefault defaultFabricConfig.network.ipv6.gateway;
               };
             };
           };
