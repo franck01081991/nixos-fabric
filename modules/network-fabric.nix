@@ -78,32 +78,6 @@ in {
       description = "Deployment environment (production, staging, development)";
     };
     
-    # Directories
-    configDir = mkOption {
-      type = str;
-      default = defaultFabricConfig.configDir;
-      description = "Base configuration directory";
-    };
-    
-    ansibleDir = mkOption {
-      type = str;
-      default = defaultFabricConfig.ansibleDir;
-      description = "Ansible configuration directory";
-    };
-    
-    # Roles configuration
-    roles = mkOption {
-      type = attrsOf (submodule {
-        options = {
-          enable = mkDefault false;
-          roleId = mkDefault "";
-          description = mkDefault "";
-        };
-      });
-      default = defaultFabricConfig.roles;
-      description = "Fabric roles configuration";
-    };
-    
     # Network settings
     network = mkOption {
       type = submodule {
@@ -134,11 +108,33 @@ in {
       description = "Network configuration";
     };
     
-    # Security settings
-    # Security configuration is handled by the comprehensive security module
-    # which provides SSH hardening, firewall, fail2ban, AppArmor, auditd, 
-    # secret management, security updates, and system hardening features.
-    # under network-fabric.security-improved to avoid conflicts
+    # Security settings - integrated network security
+    security = mkOption {
+      type = submodule {
+        options = {
+          enable = mkDefault true;
+          ssh = mkOption {
+            type = submodule {
+              options = {
+                port = mkDefault defaultFabricConfig.security.sshPort;
+                enable = mkDefault true;
+                passwordAuthentication = mkDefault false;
+                permitRootLogin = mkDefault "prohibit-password";
+                allowUsers = mkDefault [ "franck" "nixos" ];
+                allowGroups = mkDefault [ "wheel" ];
+                maxAuthTries = mkDefault 3;
+                loginGraceTime = mkDefault 30;
+                banner = mkDefault "/etc/issue";
+              };
+            };
+          };
+          firewallEnable = mkDefault true;
+          fail2banEnable = mkDefault true;
+        };
+      };
+      default = defaultFabricConfig.security;
+      description = "Integrated network security configuration";
+    };
   };
   
   config = mkIf config.network-fabric.enable {
@@ -180,9 +176,12 @@ EOF
     environment.sessionVariables = {
       NIXOS_FABRIC_NAME = config.network-fabric.name;
       NIXOS_FABRIC_ENVIRONMENT = config.network-fabric.environment;
-      NIXOS_FABRIC_CONFIG_DIR = config.network-fabric.configDir;
-      NIXOS_FABRIC_ANSIBLE_DIR = config.network-fabric.ansibleDir;
     };
+    
+    # Import network security module
+    imports = [
+      ./network-security.nix
+    ];
     
     # Create systemd service for fabric management
     systemd.services.nixos-fabric = {
