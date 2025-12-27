@@ -91,12 +91,13 @@ jobs:
         extra-conf: ${{ env.NIX_CONFIG }}
 
     - name: Test security module syntax
-      run: nix-instantiate --eval -E 'import ./modules/security/init.nix'
+      run: nix-instantiate --eval -E 'import ./modules/security/init.nix { config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>; }'
 
     - name: Test security module with basic config
       run: |
         nix-instantiate --eval -E '
           let
+            pkgs = import <nixpkgs> {};
             config = {
               network-fabric.security = {
                 enable = true;
@@ -110,7 +111,7 @@ jobs:
                 };
               };
             };
-          in import ./modules/security/init.nix { inherit config; }'
+          in import ./modules/security/init.nix { inherit config pkgs; lib = import <nixpkgs/lib>; }'
 
     - name: Test example configuration
       run: nix-instantiate --eval -E 'import ./examples/security-example.nix'
