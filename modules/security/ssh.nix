@@ -66,7 +66,9 @@
         PermitRootLogin = lib.mkForce config.network-fabric.security.ssh.permitRootLogin;
         PasswordAuthentication = lib.mkForce (toString config.network-fabric.security.ssh.passwordAuthentication);
         ChallengeResponseAuthentication = false;
+        KbdInteractiveAuthentication = false;
         UsePAM = true;
+        UseDNS = false;
         AllowUsers = config.network-fabric.security.ssh.allowUsers;
         AllowGroups = config.network-fabric.security.ssh.allowGroups;
         MaxAuthTries = lib.mkForce (toString config.network-fabric.security.ssh.maxAuthTries);
