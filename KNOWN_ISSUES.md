@@ -6,19 +6,24 @@ This document tracks known issues and planned improvements for the NixOS Fabric 
 
 ### 1. Module Validation Syntax
 **Status**: Temporarily disabled
-**Location**: `modules/security-improved.nix`
-**Issue**: The `validateSecurityConfig` function was removed due to syntax conflicts with `lib.mkAssert`.
-**Impact**: Security configuration is not automatically validated.
-**Workaround**: Manual validation recommended.
+**Location**: `modules/security-improved.nix`, `modules/roles/generic.nix`, `modules/roles/spine-improved.nix`
+**Issue**: Multiple validation functions were disabled due to syntax conflicts with `lib.mkAssert`.
+**Impact**: Automatic validation is not working for security and role configurations.
+**Workaround**: Manual validation recommended until proper syntax is implemented.
 
 ### 2. Flake Check Errors
 **Status**: Investigation needed
-**Issue**: `nix flake check` fails with module system errors.
+**Issue**: `nix flake check` fails with module system errors. Basic evaluation also fails.
 **Possible causes**:
 - Module import order conflicts
-- Circular dependencies
-- Nixpkgs version compatibility
-**Next steps**: Test with simpler configurations to isolate the issue.
+- Circular dependencies between modules
+- Nixpkgs version compatibility issues
+- Complex module interactions
+**Next steps**: 
+- Test with minimal configuration to isolate the issue
+- Check for module dependency cycles
+- Verify Nixpkgs compatibility
+- Simplify module structure if needed
 
 ### 3. Ansible Integration Complexity
 **Status**: Partially implemented
@@ -30,6 +35,7 @@ This document tracks known issues and planned improvements for the NixOS Fabric 
 ## 🛠️ Planned Improvements
 
 ### Short Term (Next 1-2 weeks)
+- [ ] **Critical**: Fix module system errors preventing basic evaluation
 - [ ] Re-implement module validation with proper Nix syntax
 - [ ] Fix remaining flake check errors
 - [ ] Test Ansible integration on real hardware
@@ -148,10 +154,10 @@ For questions and discussions:
 
 | Area | Status | Coverage |
 |------|--------|----------|
-| Core Modules | ✅ Stable | 90% |
-| Role System | ✅ Stable | 95% |
-| Security | ⚠️ Partial | 70% |
-| Ansible | ⚠️ Partial | 75% |
+| Core Modules | ⚠️ Partial | 60% |
+| Role System | ⚠️ Partial | 70% |
+| Security | ⚠️ Partial | 50% |
+| Ansible | ⚠️ Partial | 60% |
 | Documentation | ❌ Needed | 50% |
 | Testing | ❌ Needed | 40% |
 
