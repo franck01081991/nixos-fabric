@@ -3,18 +3,16 @@
 let
   cfg = config.network-fabric.frr || {};
   
-  # Generate BGP neighbor configurations
-  generateBGPNeighbors = neighbors: 
-    lib.concatStringsSep "\n" (
-      lib.mapAttrs (name: neighborConfig: 
-        ''
-        neighbor ${neighborConfig.ip} remote-as ${toString neighborConfig.as}
-        neighbor ${neighborConfig.ip} update-source ${neighborConfig.updateSource or "lo"}
-        ${if neighborConfig.ebgpMultihop then "neighbor ${neighborConfig.ip} ebgp-multihop ${toString neighborConfig.ebgpMultihop}" else ""}
-        ${if neighborConfig.description then "neighbor ${neighborConfig.ip} description ${neighborConfig.description}" else ""}
-        ''
-      ) neighbors
-    );
+  # Generate BGP neighbor configurations (returns a single plain string)
+  generateBGPNeighbors = neighbors:
+    lib.concatStringsSep "\n" (lib.map (neighborConfig:
+      lib.concatStringsSep "\n" (lib.filter (x: x != "") [
+        "neighbor ${neighborConfig.ip} remote-as ${toString neighborConfig.as}"
+        "neighbor ${neighborConfig.ip} update-source ${neighborConfig.updateSource or "lo"}"
+        (if neighborConfig.ebgpMultihop then "neighbor ${neighborConfig.ip} ebgp-multihop ${toString neighborConfig.ebgpMultihop}" else "")
+        (if neighborConfig.description then "neighbor ${neighborConfig.ip} description ${neighborConfig.description}" else "")
+      ])
+    ) (builtins.attrValues neighbors));
 
   # Generate OSPF network statements
   generateOSPFNetworks = networks: 
@@ -126,47 +124,41 @@ in {
         ''}
         
         # BGP configuration
-        lib.mkIf cfg.bgp.enable (lib.concatStringsSep "\n" (
-          [
+        ${lib.mkIf cfg.bgp.enable (lib.concatStringsSep "\n" (
+          ([
             "router bgp ${toString cfg.bgp.as}"
             "  bgp router-id ${cfg.bgp.routerId}"
           ]
           ++ (if cfg.bgp.clusterId then [ "  bgp cluster-id ${cfg.bgp.clusterId}" ] else [])
-          ++ [
-            # generateBGPNeighbors already returns a string, include it directly
-            generateBGPNeighbors cfg.bgp.neighbors
-          ]
-          ++ [
-            # Address-family blocks: build each AF with concatStrings so we don't create nested '' blocks
-            lib.concatStringsSep "\n" (lib.map (af:
-              lib.concatStringsSep "\n" (
-                [ "  address-family ${af}" ]
-                ++ (lib.map (network: "    network ${network}") cfg.bgp.networks)
-                ++ [ generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors) ]
-                ++ [ "  exit-address-family" ]
-              )
-            ) cfg.bgp.addressFamilies)
-          ]
-          ++ [ "!" ]
-        ))
+          ++ [ generateBGPNeighbors cfg.bgp.neighbors ]
+          ++ (lib.map (af:
+               lib.concatStringsSep "\n" (
+                 [ "  address-family ${af}" ]
+                 ++ (lib.map (network: "    network ${network}") cfg.bgp.networks)
+                 ++ [ generateBGPNeighbors (lib.filterAttrs (name: neighbor: neighbor.addressFamilies && lib.elem af neighbor.addressFamilies) cfg.bgp.neighbors) ]
+                 ++ [ "  exit-address-family" ]
+               )
+             ) cfg.bgp.addressFamilies)
+          ++ [ "!" ])
+        )}
         
         # EVPN configuration
-        lib.mkIf cfg.evpn.enable ''
-        router bgp "${toString cfg.bgp.as}" vrf default
-          address-family l2vpn evpn
-            neighbor ${lib.concatStringsSep " " cfg.evpn.neighbors} activate
-          exit-address-family
-        !
-        ''
+        ${lib.mkIf cfg.evpn.enable (lib.concatStringsSep "\n" [
+          "router bgp ${toString cfg.bgp.as} vrf default"
+          "  address-family l2vpn evpn"
+          "    neighbor ${lib.concatStringsSep " " cfg.evpn.neighbors} activate"
+          "  exit-address-family"
+          "!"
+        ])}
          
         # OSPF configuration
-        lib.mkIf cfg.ospf.enable ''
-        router ospf
-          ospf router-id "${cfg.ospf.routerId}"
-          ${generateOSPFNetworks cfg.ospf.networks}
-          ${lib.concatStringsSep "\n" (lib.map (iface: "passive-interface ${iface}") cfg.ospf.passiveInterfaces)}
-        !
-        ''
+        ${lib.mkIf cfg.ospf.enable (lib.concatStringsSep "\n" [
+          "router ospf"
+          "  ospf router-id ${cfg.ospf.routerId}"
+          generateOSPFNetworks cfg.ospf.networks
+          lib.concatStringsSep "\n" (lib.map (iface: "  passive-interface ${iface}") cfg.ospf.passiveInterfaces)
+          "!"
+        ])}
       ];
     };
     
