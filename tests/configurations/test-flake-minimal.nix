@@ -8,7 +8,7 @@
           inherit system;
           modules = [
             ./modules/network-fabric.nix
-            ./modules/networking.nix
+            ./modules/networking/networking.nix
             ({ config, lib, pkgs, ... }:
             {
               network-fabric.network = {

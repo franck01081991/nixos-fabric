@@ -16,9 +16,9 @@ echo "Test 1: Security Module Structure"
 echo "----------------------------------"
 if [ -f "modules/security/init.nix" ] && \
    [ -f "modules/security/default.nix" ] && \
-   [ -f "docs/modules/security/README.md" ] && \
+   [ -f "modules/security/README.md" ] && \
    [ -f "modules/security/index.nix" ] && \
-   [ -f "docs/modules/security/QUICKSTART.md" ]; then
+   [ -f "modules/security/QUICKSTART.md" ]; then
     echo "✅ PASS: Security module structure is organized"
 else
     echo "❌ FAIL: Security module structure issues"
@@ -88,8 +88,8 @@ echo ""
 echo "Test 7: Documentation Completeness"
 echo "-----------------------------------"
 doc_files=(
-    "docs/modules/security/README.md"
-    "docs/modules/security/QUICKSTART.md"
+    "modules/security/README.md"
+    "modules/security/QUICKSTART.md"
     "modules/security/index.nix"
     "docs/reference/STRUCTURE.md"
 )
