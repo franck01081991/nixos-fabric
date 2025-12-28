@@ -19,10 +19,8 @@
           modules = [
             ({ config, pkgs, ... }: {
               imports = [
-                ./external-integration.nix
-                ../external/rtr-noisy-config/default.nix
+                ../external-integration.nix
                 ../hosts/default-ansible.nix
-                ./modules/gitops.nix
               ];
 
               # Machine-specific GitOps configuration
@@ -45,10 +43,8 @@
           modules = [
             ({ config, pkgs, ... }: {
               imports = [
-                ./external-integration.nix
-                ../external/rtr-sapinet-config/default.nix
+                ../external-integration.nix
                 ../hosts/default-ansible.nix
-                ./modules/gitops.nix
               ];
 
               # Machine-specific GitOps configuration
@@ -71,8 +67,8 @@
           modules = [
             ({ config, pkgs, ... }: {
               imports = [
-                ./external-integration.nix
-                ./modules/gitops.nix
+                ../external-integration.nix
+                ../gitops/modules/gitops.nix
               ];
 
               # Enable GitOps for all external machines

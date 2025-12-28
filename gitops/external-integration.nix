@@ -4,17 +4,9 @@
 # This module integrates existing external configurations with GitOps capabilities
 
 {
-  # Import external configurations
+  # Import only the GitOps module - external configs are handled by the flake itself
   imports = [
-    # External machine configurations
-    (builtins.path { path = [ "external" "rtr-noisy-config" "default.nix" ]; })
-    (builtins.path { path = [ "external" "rtr-sapinet-config" "default.nix" ]; })
-    
-    # Host configurations
-    (builtins.path { path = [ "hosts" "default-ansible.nix" ]; })
-    
-    # GitOps module
-    (builtins.path { path = [ "gitops" "modules" "gitops.nix" ]; })
+    ../modules/gitops.nix
   ];
 
   # Enable GitOps for external machines
@@ -80,7 +72,7 @@ EOF
       RestartSec = "60s";
       Environment = "FABRIC_GITOPS_EXTERNAL=true";
     };
-    path = [ pkgs.bash bin ];
+    path = [ pkgs.bash/bin ];
   };
 
   # GitOps timer for external machines

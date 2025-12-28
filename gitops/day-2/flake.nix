@@ -18,7 +18,7 @@
           modules = [
             ({ config, pkgs, lib, ... }: {
               imports = [
-                ./modules/gitops.nix
+                ../modules/gitops.nix
               ];
 
               # GitOps configuration
