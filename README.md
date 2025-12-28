@@ -1,278 +1,422 @@
-# NixOS Fabric - Secure Network Infrastructure
+# NixOS Fabric - GitOps Edition
 
-## Overview
+[![GitOps Pipeline](https://github.com/your-org/nixos-fabric/actions/workflows/gitops-pipeline.yml/badge.svg)](https://github.com/your-org/nixos-fabric/actions/workflows/gitops-pipeline.yml)
 
-**NixOS Fabric** is a **pure network-focused** project that provides a **secure, declarative** approach to building and managing network infrastructure using NixOS. This project integrates **routing (FRR), VPN (WireGuard), and comprehensive security** into a unified, reproducible configuration system.
+**Modern NixOS infrastructure with pure GitOps deployment model**
 
-## Key Features
-
-### 🔒 **Security-First Network Design**
-- **Integrated Security**: Security is not an afterthought - it's built into every network component
-- **BGP Security**: RFC 8205 (BGPsec) compliance with TTL security, prefix filtering, and RPKI validation
-- **WireGuard Security**: Rate limiting, interface restriction, and comprehensive firewall rules
-- **OSPF Security**: Message digest authentication for secure routing
-- **Fail2Ban Integration**: Automatic intrusion prevention for SSH and network services
-- **Stateful Firewall**: Advanced nftables rules with logging and rate limiting
-
-### 🌐 **Core Network Components**
-
-#### **FRR (Free Range Routing)**
-- **BGP**: Full BGP implementation with security extensions
-- **OSPF**: Secure OSPF with authentication support
-- **EVPN**: L2VPN EVPN for overlay networks
-- **Protocol Security**: Integrated security policies for all routing protocols
-
-#### **WireGuard VPN**
-- **Secure Transport**: Encrypted overlay networks with modern cryptography
-- **Performance Optimized**: Proper MTU settings and persistent keepalive
-- **Rate Limiting**: Protection against DoS attacks
-- **Firewall Integration**: Automatic firewall rules for WireGuard interfaces
-
-#### **Unified Security Architecture**
-- **Network Security Module**: Centralized security policies that integrate with all network components
-- **VLAN Isolation**: Secure network segmentation with explicit inter-VLAN routing rules
-- **Default Deny**: Security-by-default posture with explicit allow rules
-- **Comprehensive Logging**: Detailed security logging for auditing and compliance
-
-## Architecture
-
-```
-┌───────────────────────────────────────────────────────┐
-│                 NixOS Fabric Architecture               │
-├───────────────────────────────────────────────────────┤
-│                                                       │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
-│  │   FRR       │    │  WireGuard  │    │  Security   │  │
-│  │  (Routing)  │    │   (VPN)     │    │  (Firewall) │  │
-│  └─────────────┘    └─────────────┘    └─────────────┘  │
-│          │               │                   │           │
-│          ▼               ▼                   ▼           │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │         Network Security Integration           │  │
-│  │  (Unified policies, VLAN isolation, logging)   │  │
-│  └───────────────────────────────────────────────────┘  │
-│                                                       │
-└───────────────────────────────────────────────────────┘
-```
-
-## Getting Started
-
-### Prerequisites
-- NixOS system
-- Basic understanding of networking concepts
-- Familiarity with Nix language
-
-### Quick Start
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-repo/nixos-fabric.git
-   cd nixos-fabric
-   ```
-
-2. **Initialize submodules:**
-   ```bash
-   git submodule update --init --recursive
-   ```
-
-3. **Validate external configurations:**
-   ```bash
-   ./scripts/validate-external-configs.sh
-   ```
-
-4. **Review the example configuration:**
-   ```bash
-   less examples/network-security-config.nix
-   ```
-
-5. **Deploy to a test system:**
-   ```bash
-   sudo nixos-rebuild switch --flake .#your-hostname
-   ```
-
-### External Configurations Workflow
-
-The project includes a dynamic workflow for managing external machine configurations:
+## 🚀 Quick Start
 
 ```bash
-# Validate all external configurations
-./scripts/validate-external-configs.sh
+# Clone the repository
+git clone git@github.com:your-org/nixos-fabric.git
+cd nixos-fabric
 
-# Run comprehensive tests
-./tests/scripts/test-external-configs.sh
+# Explore the GitOps structure
+ls -la gitops/
 
-# Synchronize validated configs to hosts/
-./scripts/sync-and-validate.sh
+# Read the complete GitOps documentation
+cat GITOPS_README.md
 ```
 
-See [External Configurations Workflow](docs/setup/external-configs-workflow.md) for detailed documentation.
+## 🎯 What is NixOS Fabric GitOps?
 
-## Configuration Examples
+NixOS Fabric GitOps is a **pure GitOps deployment model** for NixOS infrastructure that combines:
 
-### Basic Secure Fabric
+- **Day-0 Bootstrap**: Initial deployment via CI/CD pipeline
+- **Day-2 GitOps**: Machines automatically pull and apply updates from Git
+- **Flake-based**: Modern Nix flakes for reproducible configurations
+- **CI/CD Integration**: Comprehensive validation and testing pipeline
+
+## 🔧 Features
+
+### Day-0 Bootstrap
+- ✅ Minimal initial configuration
+- ✅ SSH access setup
+- ✅ Basic system hardening
+- ✅ Fabric directory structure
+- ✅ CI/CD pipeline deployment
+
+### Day-2 GitOps
+- ✅ Automatic Git repository tracking
+- ✅ Periodic update checks (every 15 minutes)
+- ✅ Automatic `nixos-rebuild` on changes
+- ✅ Systemd service and timer
+- ✅ Comprehensive logging
+
+### CI/CD Pipeline
+- ✅ Full configuration validation
+- ✅ Automatic artifact creation
+- ✅ Deployment package generation
+- ✅ Scheduled updates
+- ✅ Pull request validation
+
+## 📁 Project Structure
+
+```
+.
+├── .github/                  # GitHub CI/CD workflows
+│   └── workflows/            # GitOps pipeline
+│       └── gitops-pipeline.yml
+├── gitops/                   # GitOps configurations
+│   ├── day-0/                # Day-0 Bootstrap
+│   │   └── bootstrap-flake.nix
+│   ├── day-2/                # Day-2 GitOps
+│   │   ├── gitops-flake.nix
+│   │   └── modules/          # GitOps modules
+│   │       └── gitops.nix
+│   └── README.md             # GitOps documentation
+├── GITOPS_README.md          # Complete GitOps guide
+├── README.md                 # This file
+└── ...                       # Other project files
+```
+
+## 🛠️ Usage
+
+### 1. Initial Setup
+
+```bash
+# Clone the repository
+git clone git@github.com:your-org/nixos-fabric.git
+cd nixos-fabric
+
+# Customize configurations
+vim gitops/day-0/bootstrap-flake.nix
+vim gitops/day-2/gitops-flake.nix
+
+# Commit and push
+git add .
+git commit -m "Initial GitOps setup"
+git push origin master
+```
+
+### 2. Deploy Day-0
+
+1. Wait for CI/CD pipeline to complete
+2. Download the `nixos-fabric-complete-deployment` artifact
+3. Run the deployment script:
+
+```bash
+./deploy.sh root@target-machine
+```
+
+### 3. Activate Day-2
+
+```bash
+./activate-gitops.sh root@target-machine
+```
+
+### 4. Monitor GitOps
+
+```bash
+# Check service status
+ssh root@target-machine "systemctl status nixos-fabric-gitops"
+
+# View logs
+ssh root@target-machine "journalctl -u nixos-fabric-gitops -f"
+
+# Check timer
+ssh root@target-machine "systemctl list-timers | grep gitops"
+```
+
+### 5. Deploy to External Machines
+
+```bash
+# After CI/CD pipeline completes, download the deployment package
+# Then deploy to individual machines:
+
+# Deploy to rtr-noisy
+./deploy-rtr-noisy.sh root@rtr-noisy
+
+# Deploy to rtr-sapinet
+./deploy-rtr-sapinet.sh root@rtr-sapinet
+
+# Or deploy to all external machines at once
+./deploy-all-external.sh
+```
+
+### 6. Monitor External Machines
+
+```bash
+# Check external machines GitOps status
+ssh root@rtr-noisy "systemctl status nixos-fabric-gitops-external"
+ssh root@rtr-sapinet "systemctl status nixos-fabric-gitops-external"
+
+# View external machines logs
+ssh root@rtr-noisy "journalctl -u nixos-fabric-gitops-external -f"
+ssh root@rtr-sapinet "journalctl -u nixos-fabric-gitops-external -f"
+```
+
+## 🔄 Development Workflow
+
+### Making Changes
+
+```bash
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Make changes to configurations
+vim gitops/day-2/gitops-flake.nix
+
+# Test locally
+nix build ./gitops/day-2#gitops
+
+# Commit changes
+git add .
+git commit -m "Add new feature"
+git push origin feature/new-feature
+```
+
+### Pull Request Process
+
+1. Create pull request to `master`
+2. CI/CD pipeline validates changes
+3. Review and approve
+4. Merge to `master`
+5. Machines automatically pull updates
+
+## 🌐 External Machines Integration
+
+The GitOps model integrates with existing external machine configurations:
+
+- **rtr-noisy**: Hybrid router configuration
+- **rtr-sapinet**: Spine router configuration
+
+### External Machines Configuration
 
 ```nix
+# gitops/external
 {
-  network-fabric = {
-    enable = true;
-    name = "my-secure-fabric";
-    
-    security = {
-      enable = true;
-      ssh = {
-        port = 2222;
-        passwordAuthentication = false;
+  description = "NixOS Fabric - External Machines GitOps Flake";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  };
+
+  outputs = { self, nixpkgs, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+    in
+    {
+      nixosConfigurations = {
+        # Individual machine configurations
+        rtr-noisy-gitops = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ({ config, pkgs, ... }: {
+              imports = [
+                ./external-integration.nix
+                ../external/rtr-noisy-config/default.nix
+                ../hosts/default-ansible.nix
+                ./modules/gitops.nix
+              ];
+              
+              # Machine-specific GitOps settings
+              network-fabric.gitops.machines."rtr-noisy".enable = true;
+              networking.hostName = "rtr-noisy";
+            })
+          ];
+        };
+
+        # Combined configuration for all external machines
+        external-gitops = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ({ config, pkgs, ... }: {
+              imports = [
+                ./external-integration.nix
+                ./modules/gitops.nix
+              ];
+              
+              network-fabric.gitops = {
+                enable = true;
+                machines = {
+                  "rtr-noisy" = {
+                    enable = true;
+                    configPath = "external/rtr-noisy-config/default.nix";
+                  };
+                  "rtr-sapinet" = {
+                    enable = true;
+                    configPath = "external/rtr-sapinet-config/default.nix";
+                  };
+                };
+              };
+            })
+          ];
+        };
       };
-      firewallEnable = true;
-      fail2banEnable = true;
     };
-  };
-
-  network-fabric.frr = {
-    enable = true;
-    security = {
-      bgpTtlSecurity = true;
-      ospfAuthentication = true;
-    };
-  };
-
-  network-fabric.wireguard = {
-    enable = true;
-    security = {
-      rateLimit = "1000/m";
-      mtu = 1420;
-    };
-  };
 }
 ```
 
-### Advanced Security Policies
+## 📊 Configuration Examples
+
+### Basic Bootstrap
 
 ```nix
-network-fabric.network-security = {
-  enable = true;
-  
-  policies = {
-    defaultDeny = true;
-    vlanIsolation = true;
-    sshRateLimit = "5/minute";
-    icmpRateLimit = "3/sec";
+# gitops/day-0/bootstrap-flake.nix
+{
+  description = "NixOS Fabric - Day-0 Bootstrap Flake";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
-  
-  protocolSecurity = {
-    bgp = {
-      ttlSecurity = true;
-      maxPrefix = 500;
-      rpkiValidation = true;
+
+  outputs = { self, nixpkgs, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+    in
+    {
+      nixosConfigurations = {
+        bootstrap = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ({ config, pkgs, ... }: {
+              # Your bootstrap configuration here
+              networking.hostName = "nixos-fabric";
+              services.openssh.enable = true;
+            })
+          ];
+        };
+      };
     };
-    
-    wireguard = {
-      rateLimiting = "500/m";
-      interfaceRestriction = true;
-    };
-  };
-};
+}
 ```
 
-## Security Features
+### GitOps Configuration
 
-### BGP Security (RFC 8205)
-- **TTL Security**: Prevents CPU exhaustion attacks
-- **Prefix Filtering**: Limits number of accepted prefixes
-- **RPKI Validation**: Route origin validation
-- **Max Prefix Limits**: Protection against route leaks
-
-### WireGuard Security
-- **Rate Limiting**: Protection against DoS attacks
-- **Interface Restriction**: Limits WireGuard to specific interfaces
-- **MTU Optimization**: Prevents fragmentation issues
-- **Persistent Keepalive**: Maintains stable connections
-
-### Network Security
-- **Default Deny Policy**: Security-by-default posture
-- **VLAN Isolation**: Prevents VLAN hopping attacks
-- **Stateful Firewall**: Comprehensive connection tracking
-- **Protocol-Specific Rules**: Tailored security for each protocol
-
-## Deployment Patterns
-
-### Spine-Leaf Architecture
 ```nix
-# Spine Router Configuration
-network-fabric.frr.bgp = {
-  as = 65000;
-  neighbors = {
-    leaf1 = { ip = "10.255.0.1"; as = 65001; };
-    leaf2 = { ip = "10.255.0.2"; as = 65002; };
-  };
-};
+# gitops/day-2/gitops-flake.nix
+{
+  description = "NixOS Fabric - Day-2 GitOps Flake";
 
-# Leaf Router Configuration  
-network-fabric.frr.bgp = {
-  as = 65001;
-  neighbors = {
-    spine1 = { ip = "10.255.0.100"; as = 65000; };
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
-};
-```
 
-### Secure Overlay Network
-```nix
-network-fabric.wireguard = {
-  enable = true;
-  peers = {
-    peer1 = {
-      publicKey = "...";
-      endpoint = "peer1.example.com:51820";
-      allowedIPs = [ "10.255.0.2/32" ];
+  outputs = { self, nixpkgs, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+    in
+    {
+      nixosConfigurations = {
+        gitops = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ({ config, pkgs, ... }: {
+              imports = [ ./modules/gitops.nix ];
+
+              network-fabric.gitops = {
+                enable = true;
+                repository = "git@github.com:your-org/nixos-fabric.git";
+                branch = "master";
+                interval = "15m";
+              };
+            })
+          ];
+        };
+      };
     };
-  };
-  
-  security = {
-    rateLimit = "1000/m";
-    interfaceRestriction = true;
-  };
-};
+}
 ```
 
-## Best Practices
+## 🛡️ Security
 
-### Security Recommendations
-1. **Use Non-Standard SSH Ports**: Reduce automated attack surface
-2. **Enable Rate Limiting**: Protect against brute force attacks
-3. **Use RPKI Validation**: Prevent BGP hijacking
-4. **Enable OSPF Authentication**: Secure routing protocol exchanges
-5. **Restrict WireGuard Interfaces**: Limit VPN access to management interfaces
-6. **Enable Fail2Ban**: Automatic intrusion prevention
-7. **Use VLAN Isolation**: Prevent lateral movement in case of compromise
+### Bootstrap Phase
+- Temporary SSH access with root login
+- Minimal attack surface
+- Basic security hardening
 
-### Performance Optimization
-1. **Proper MTU Settings**: Avoid fragmentation (1420 for WireGuard)
-2. **Persistent Keepalive**: Maintain stable WireGuard connections
-3. **BGP TTL Security**: Prevent CPU exhaustion without affecting performance
-4. **Stateful Firewall**: Maintain connection tracking for legitimate traffic
+### GitOps Phase
+- Read-only Git access via deploy keys
+- Automatic security updates
+- Comprehensive logging
+- Service isolation
 
-## Documentation
+### Best Practices
+- Rotate deploy keys regularly
+- Monitor SSH access logs
+- Audit all configuration changes
+- Backup configurations before major updates
 
-- **Module Reference**: Detailed documentation for each module
-- **Security Guide**: Comprehensive security configuration guide
-- **Deployment Patterns**: Recommended architectures and configurations
-- **Troubleshooting**: Common issues and solutions
+## 📚 Documentation
 
-## Contributing
+- **[Complete GitOps Guide](GITOPS_README.md)** - Detailed GitOps implementation
+- **[CI/CD Pipeline](.github/workflows/gitops-pipeline.yml)** - GitOps pipeline definition
+- **[Day-0 Bootstrap](gitops/day-0/bootstrap-flake.nix)** - Initial deployment configuration
+- **[Day-2 GitOps](gitops/day-2/gitops-flake.nix)** - Continuous deployment configuration
 
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to contribute to this project.
+## 🤝 Contributing
 
-## License
+### How to Contribute
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+6. Wait for CI/CD validation
+7. Get reviewed and merged
 
-## Support
+### Testing
 
-For support, please open an issue on GitHub or contact the maintainers.
+```bash
+# Test bootstrap configuration
+nix build ./gitops/day-0#bootstrap
+
+# Test GitOps configuration
+nix build ./gitops/day-2#gitops
+
+# Validate flakes
+nix flake check ./gitops/day-0
+nix flake check ./gitops/day-2
+nix flake check ./gitops/external
+
+# Test external machines configurations
+nix build ./gitops/external#rtr-noisy-gitops
+nix build ./gitops/external#rtr-sapinet-gitops
+nix build ./gitops/external#external-gitops
+```
+
+### Code Style
+
+- Follow NixOS best practices
+- Use flakes for all configurations
+- Document all modules and options
+- Keep configurations modular and reusable
+
+## 🔒 Private Submodules
+
+**Important Security Note**: The external machine configurations (`external/rtr-sapinet-config` and `external/rtr-noisy-config`) are stored in **private GitHub repositories** as submodules. This ensures that sensitive configuration details are not exposed in the public repository.
+
+### Setup Required
+
+1. **Create private repositories** on GitHub for the external configurations
+2. **Configure SSH access** using deploy keys
+3. **Set up CI/CD secrets** with the SSH private key
+4. **Initialize submodules** after cloning the main repository
+
+See [GITOPS_README.md](GITOPS_README.md) for detailed setup instructions.
+
+**Complete Setup Guide**: [PRIVATE_SUBMODULES_SETUP.md](PRIVATE_SUBMODULES_SETUP.md)
+
+## 📝 License
+
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+- NixOS community for the excellent infrastructure
+- GitOps community for deployment best practices
+- All contributors who make this project possible
 
 ---
 
-**NixOS Fabric** - Building Secure Networks with NixOS
+**NixOS Fabric GitOps** - Modern infrastructure deployment with NixOS and GitOps principles.
 
-*Security is not a feature, it's a requirement.*
+📧 **Contact**: contact@your-org.com
+🌐 **Website**: https://your-org.com/nixos-fabric
+🐦 **Twitter**: @yourorg
+💼 **Organization**: Your Organization

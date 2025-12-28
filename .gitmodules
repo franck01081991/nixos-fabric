@@ -1,12 +1,13 @@
-# External configuration submodules
-# These will be activated once the external repositories are created
+# External configuration submodules - PRIVATE REPOSITORIES
+# These repositories should be set to PRIVATE on GitHub
+# Access is controlled via SSH deploy keys in CI/CD
 
 [submodule "external/rtr-sapinet-config"]
   path = external/rtr-sapinet-config
-  url = https://github.com/franck01081991/rtr-sapinet-config.git
+  url = git@github.com:franck01081991/rtr-sapinet-config.git
   branch = master
 
 [submodule "external/rtr-noisy-config"]
   path = external/rtr-noisy-config
-  url = https://github.com/franck01081991/rtr-noisy-config.git
+  url = git@github.com:franck01081991/rtr-noisy-config.git
   branch = master

@@ -1,0 +1,632 @@
+name: NixOS Fabric GitOps Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 * * * *'  # DAY-2: GitOps Pipeline
+  # ============================================
+  day-2-gitops:
+    name: Day-2 GitOps
+    runs-on: ubuntu-latest
+    needs: day-0-bootstrap
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Setup SSH for private submodules
+      run: |
+        echo "🔑 Setting up SSH for private submodules..."
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
+        echo "✅ SSH setup completed"
+
+    - name: Build GitOps configuration
+      run: |
+        echo "🏗️ Building Day-2 GitOps configuration..."
+        nix build ./gitops/day-2#gitops
+        echo "✅ GitOps configuration built successfully"
+
+    - name: Test GitOps configuration
+      run: |
+        echo "🧪 Testing GitOps configuration..."
+        nix eval ./gitops/day-2#gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/day-2#gitops.config.systemd.services.nixos-fabric-gitops.description
+        echo "✅ GitOps configuration tests passed"
+
+    - name: Create GitOps artifacts
+      run: |
+        echo "📦 Creating Day-2 GitOps artifacts..."
+        mkdir -p deploy/gitops
+        cp result /deploy/gitops/nixos-gitops-configuration
+        
+        # Create GitOps activation script
+        cat > deploy/gitops/activate-gitops.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # GitOps Activation Script
+        TARGET_HOST="${1:-root@target-machine}"
+        
+        echo "Activating GitOps on ${TARGET_HOST}..."
+        scp /deploy/gitops/nixos-gitops-configuration ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/nixos-gitops-configuration#gitops"
+        
+        # Enable and start GitOps service
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.timer"
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.service"
+        
+        echo "✅ GitOps activated - machine will now auto-update from Git"
+        EOF
+        
+        chmod +x deploy/gitops/activate-gitops.sh
+        echo "✅ GitOps artifacts created"
+
+    - name: Upload GitOps artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-gitops
+        path: deploy/gitops/
+=======
+  # ============================================
+  # DAY-2: GitOps Pipeline
+  # ============================================
+  day-2-gitops:
+    name: Day-2 GitOps
+    runs-on: ubuntu-latest
+    needs: day-0-bootstrap
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Build GitOps configuration
+      run: |
+        echo "🏗️ Building Day-2 GitOps configuration..."
+        nix build ./gitops/day-2#gitops
+        echo "✅ GitOps configuration built successfully"
+
+    - name: Test GitOps configuration
+      run: |
+        echo "🧪 Testing GitOps configuration..."
+        nix eval ./gitops/day-2#gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/day-2#gitops.config.systemd.services.nixos-fabric-gitops.description
+        echo "✅ GitOps configuration tests passed"
+
+    - name: Create GitOps artifacts
+      run: |
+        echo "📦 Creating Day-2 GitOps artifacts..."
+        mkdir -p deploy/gitops
+        cp result /deploy/gitops/nixos-gitops-configuration
+        
+        # Create GitOps activation script
+        cat > deploy/gitops/activate-gitops.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # GitOps Activation Script
+        TARGET_HOST="${1:-root@target-machine}"
+        
+        echo "Activating GitOps on ${TARGET_HOST}..."
+        scp /deploy/gitops/nixos-gitops-configuration ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/nixos-gitops-configuration#gitops"
+        
+        # Enable and start GitOps service
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.timer"
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.service"
+        
+        echo "✅ GitOps activated - machine will now auto-update from Git"
+        EOF
+        
+        chmod +x deploy/gitops/activate-gitops.sh
+        echo "✅ GitOps artifacts created"
+
+    - name: Upload GitOps artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-gitops
+        path: deploy/gitops/
+
+  # ============================================
+  # EXTERNAL: External Machines GitOps Pipeline
+  # ============================================
+  external-gitops:
+    name: External Machines GitOps
+    runs-on: ubuntu-latest
+    needs: day-0-bootstrap
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Build external GitOps configurations
+      run: |
+        echo "🏗️ Building external machines GitOps configurations..."
+        
+        # Build rtr-noisy GitOps configuration
+        echo "Building rtr-noisy GitOps..."
+        nix build ./gitops/external#rtr-noisy-gitops
+        cp result /tmp/rtr-noisy-gitops
+        
+        # Build rtr-sapinet GitOps configuration
+        echo "Building rtr-sapinet GitOps..."
+        nix build ./gitops/external#rtr-sapinet-gitops
+        cp result /tmp/rtr-sapinet-gitops
+        
+        # Build combined external GitOps configuration
+        echo "Building combined external GitOps..."
+        nix build ./gitops/external#external-gitops
+        cp result /tmp/external-gitops
+        
+        echo "✅ All external GitOps configurations built successfully"
+
+    - name: Test external GitOps configurations
+      run: |
+        echo "🧪 Testing external GitOps configurations..."
+        
+        # Test rtr-noisy configuration
+        nix eval ./gitops/external#rtr-noisy-gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/external#rtr-noisy-gitops.config.networking.hostName
+        
+        # Test rtr-sapinet configuration
+        nix eval ./gitops/external#rtr-sapinet-gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/external#rtr-sapinet-gitops.config.networking.hostName
+        
+        # Test combined configuration
+        nix eval ./gitops/external#external-gitops.config.network-fabric.gitops.machines.rtr-noisy.enable
+        nix eval ./gitops/external#external-gitops.config.network-fabric.gitops.machines.rtr-sapinet.enable
+        
+        echo "✅ All external GitOps configuration tests passed"
+
+    - name: Create external GitOps artifacts
+      run: |
+        echo "📦 Creating external GitOps artifacts..."
+        mkdir -p deploy/external
+        
+        # Copy individual machine configurations
+        cp /tmp/rtr-noisy-gitops deploy/external/rtr-noisy-gitops
+        cp /tmp/rtr-sapinet-gitops deploy/external/rtr-sapinet-gitops
+        cp /tmp/external-gitops deploy/external/external-gitops
+        
+        # Create deployment scripts for each machine
+        cat > deploy/external/deploy-rtr-noisy.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # rtr-noisy GitOps Deployment Script
+        TARGET_HOST="${1:-root@rtr-noisy}"
+        
+        echo "Deploying GitOps to rtr-noisy at ${TARGET_HOST}..."
+        scp deploy/external/rtr-noisy-gitops ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/rtr-noisy-gitops#rtr-noisy-gitops"
+        
+        # Enable GitOps services
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops-external.timer"
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops-external.service"
+        
+        echo "✅ rtr-noisy GitOps deployment completed"
+        EOF
+        
+        cat > deploy/external/deploy-rtr-sapinet.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # rtr-sapinet GitOps Deployment Script
+        TARGET_HOST="${1:-root@rtr-sapinet}"
+        
+        echo "Deploying GitOps to rtr-sapinet at ${TARGET_HOST}..."
+        scp deploy/external/rtr-sapinet-gitops ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/rtr-sapinet-gitops#rtr-sapinet-gitops"
+        
+        # Enable GitOps services
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops-external.timer"
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops-external.service"
+        
+        echo "✅ rtr-sapinet GitOps deployment completed"
+        EOF
+        
+        cat > deploy/external/deploy-all-external.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # Deploy GitOps to all external machines
+        echo "Deploying GitOps to all external machines..."
+        
+        # Deploy to rtr-noisy
+        ./deploy-rtr-noisy.sh root@rtr-noisy
+        
+        # Deploy to rtr-sapinet
+        ./deploy-rtr-sapinet.sh root@rtr-sapinet
+        
+        echo "✅ All external machines GitOps deployment completed"
+        EOF
+        
+        chmod +x deploy/external/*.sh
+        echo "✅ External GitOps artifacts created"
+
+    - name: Upload external GitOps artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-external-gitops
+        path: deploy/external/Every hour for Day-2 updates
+
+env:
+  NIX_CONFIG: |
+    experimental-features = nix-command flakes
+    substituters = https://cache.nixos.org https://cachix.org
+    trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
+
+jobs:
+  # ============================================
+  # DAY-0: Bootstrap Pipeline
+  # ============================================
+  day-0-bootstrap:
+    name: Day-0 Bootstrap
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+
+    - name: Setup SSH for private submodules
+      run: |
+        echo "🔑 Setting up SSH for private submodules..."
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
+        echo "✅ SSH setup completed"
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Build bootstrap configuration
+      run: |
+        echo "🏗️ Building Day-0 bootstrap configuration..."
+        nix build ./gitops/day-0#bootstrap
+        echo "✅ Bootstrap configuration built successfully"
+
+    - name: Create deployment artifacts
+      run: |
+        echo "📦 Creating Day-0 deployment artifacts..."
+        mkdir -p deploy/bootstrap
+        cp result /deploy/bootstrap/nixos-configuration
+        
+        # Create deployment script
+        cat > deploy/bootstrap/deploy.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # Day-0 Deployment Script
+        TARGET_HOST="${1:-root@target-machine}"
+        
+        echo "Deploying bootstrap configuration to ${TARGET_HOST}..."
+        scp /deploy/bootstrap/nixos-configuration ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/nixos-configuration#bootstrap"
+        echo "✅ Day-0 deployment completed"
+        EOF
+        
+        chmod +x deploy/bootstrap/deploy.sh
+        echo "✅ Deployment artifacts created"
+
+    - name: Upload bootstrap artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-bootstrap
+        path: deploy/bootstrap/
+
+  # ============================================
+  # DAY-2: GitOps Pipeline
+  # ============================================
+  day-2-gitops:
+    name: Day-2 GitOps
+    runs-on: ubuntu-latest
+    needs: day-0-bootstrap
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Build GitOps configuration
+      run: |
+        echo "🏗️ Building Day-2 GitOps configuration..."
+        nix build ./gitops/day-2#gitops
+        echo "✅ GitOps configuration built successfully"
+
+    - name: Test GitOps configuration
+      run: |
+        echo "🧪 Testing GitOps configuration..."
+        nix eval ./gitops/day-2#gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/day-2#gitops.config.systemd.services.nixos-fabric-gitops.description
+        echo "✅ GitOps configuration tests passed"
+
+    - name: Create GitOps artifacts
+      run: |
+        echo "📦 Creating Day-2 GitOps artifacts..."
+        mkdir -p deploy/gitops
+        cp result /deploy/gitops/nixos-gitops-configuration
+        
+        # Create GitOps activation script
+        cat > deploy/gitops/activate-gitops.sh <<'EOF'
+        #!/usr/bin/env bash
+        set -euo pipefail
+        
+        # GitOps Activation Script
+        TARGET_HOST="${1:-root@target-machine}"
+        
+        echo "Activating GitOps on ${TARGET_HOST}..."
+        scp /deploy/gitops/nixos-gitops-configuration ${TARGET_HOST}:/tmp/
+        ssh ${TARGET_HOST} "nixos-rebuild switch --flake /tmp/nixos-gitops-configuration#gitops"
+        
+        # Enable and start GitOps service
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.timer"
+        ssh ${TARGET_HOST} "systemctl enable --now nixos-fabric-gitops.service"
+        
+        echo "✅ GitOps activated - machine will now auto-update from Git"
+        EOF
+        
+        chmod +x deploy/gitops/activate-gitops.sh
+        echo "✅ GitOps artifacts created"
+
+    - name: Upload GitOps artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-gitops
+        path: deploy/gitops/
+
+  # ============================================
+  # VALIDATION: Configuration Validation
+  # ============================================
+  validate-configurations:
+    name: Validate Configurations
+    runs-on: ubuntu-latest
+    needs: day-2-gitops
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Validate bootstrap configuration
+      run: |
+        echo "🔍 Validating Day-0 bootstrap configuration..."
+        nix flake check ./gitops/day-0
+        nix eval ./gitops/day-0#bootstrap.config.networking.hostName
+        echo "✅ Bootstrap configuration validated"
+
+    - name: Validate GitOps configuration
+      run: |
+        echo "🔍 Validating Day-2 GitOps configuration..."
+        nix flake check ./gitops/day-2
+        nix eval ./gitops/day-2#gitops.config.network-fabric.gitops.enable
+        nix eval ./gitops/day-2#gitops.config.systemd.services.nixos-fabric-gitops.description
+        echo "✅ GitOps configuration validated"
+
+    - name: Validate flake structure
+      run: |
+        echo "🧬 Validating flake structure..."
+        nix flake show ./gitops/day-0
+        nix flake show ./gitops/day-2
+        nix flake show ./gitops/external
+        echo "✅ Flake structure validated"
+
+    - name: Validate external configurations
+      run: |
+        echo "🔍 Validating external configurations..."
+        nix eval ./gitops/external#rtr-noisy-gitops.config.networking.hostName
+        nix eval ./gitops/external#rtr-sapinet-gitops.config.networking.hostName
+        nix eval ./gitops/external#external-gitops.config.network-fabric.gitops.machines.rtr-noisy.enable
+        nix eval ./gitops/external#external-gitops.config.network-fabric.gitops.machines.rtr-sapinet.enable
+        echo "✅ External configurations validated"
+
+  # ============================================
+  # DEPLOYMENT: Final Deployment Preparation
+  # ============================================
+  prepare-deployment:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    needs: validate-configurations
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create comprehensive deployment package
+      run: |
+        echo "📦 Creating comprehensive deployment package..."
+        mkdir -p final-deployment
+        
+        # Copy all artifacts
+        cp -r artifacts/nixos-fabric-bootstrap/* final-deployment/
+        cp -r artifacts/nixos-fabric-gitops/* final-deployment/
+        cp -r artifacts/nixos-fabric-external-gitops/* final-deployment/
+        
+        # Create README
+        cat > final-deployment/README.md <<'EOF'
+        # NixOS Fabric GitOps Deployment
+        
+        ## Day-0 Bootstrap
+        
+        To deploy the initial bootstrap configuration:
+        ```bash
+        ./deploy.sh root@target-machine
+        ```
+        
+        ## Day-2 GitOps Activation
+        
+        After bootstrap, activate GitOps:
+        ```bash
+        ./activate-gitops.sh root@target-machine
+        ```
+        
+        The machine will then automatically pull updates from Git every 15 minutes.
+        
+        ## External Machines Deployment
+        
+        ### Individual Machines
+        
+        Deploy to rtr-noisy:
+        ```bash
+        ./deploy-rtr-noisy.sh root@rtr-noisy
+        ```
+        
+        Deploy to rtr-sapinet:
+        ```bash
+        ./deploy-rtr-sapinet.sh root@rtr-sapinet
+        ```
+        
+        ### All External Machines
+        
+        Deploy to all external machines:
+        ```bash
+        ./deploy-all-external.sh
+        ```
+        
+        ## Architecture
+        
+        - **Day-0**: Initial deployment via CI/CD pipeline
+        - **Day-2**: Machine pulls updates automatically from Git
+        - **GitOps**: Continuous deployment via systemd timer
+        - **External**: Integration with existing machine configurations
+        
+        ## Configuration
+        
+        - Bootstrap: `gitops/day-0/bootstrap-flake.nix`
+        - GitOps: `gitops/day-2/gitops-flake.nix`
+        - External: `gitops/external/`
+        - Module: `gitops/modules/gitops.nix`
+        - Integration: `gitops/external-integration.nix`
+        
+        ## External Machines
+        
+        - **rtr-noisy**: Hybrid router configuration
+        - **rtr-sapinet**: Spine router configuration
+        - Both machines use GitOps for continuous updates
+        EOF
+        
+        echo "✅ Deployment package created"
+        
+        # List contents
+        ls -la final-deployment/
+
+    - name: Upload final deployment package
+      uses: actions/upload-artifact@v4
+      with:
+        name: nixos-fabric-complete-deployment
+        path: final-deployment/
+
+    - name: Create deployment summary
+      run: |
+        echo "📋 Deployment Summary:" > DEPLOYMENT_SUMMARY.md
+        echo "" >> DEPLOYMENT_SUMMARY.md
+        echo "## NixOS Fabric GitOps Pipeline Results" >> DEPLOYMENT_SUMMARY.md
+        echo "" >> DEPLOYMENT_SUMMARY.md
+        echo "✅ Day-0 Bootstrap: Built and validated" >> DEPLOYMENT_SUMMARY.md
+        echo "✅ Day-2 GitOps: Built and validated" >> DEPLOYMENT_SUMMARY.md
+        echo "✅ External Machines: Built and validated" >> DEPLOYMENT_SUMMARY.md
+        echo "✅ Configurations: All tests passed" >> DEPLOYMENT_SUMMARY.md
+        echo "✅ Deployment Package: Ready for use" >> DEPLOYMENT_SUMMARY.md
+        echo "" >> DEPLOYMENT_SUMMARY.md
+        echo "### Usage:" >> DEPLOYMENT_SUMMARY.md
+        echo "1. Download the complete deployment package" >> DEPLOYMENT_SUMMARY.md
+        echo "2. Run ./deploy.sh for Day-0 bootstrap" >> DEPLOYMENT_SUMMARY.md
+        echo "3. Run ./activate-gitops.sh for Day-2 activation" >> DEPLOYMENT_SUMMARY.md
+        echo "4. Deploy to external machines with ./deploy-rtr-noisy.sh and ./deploy-rtr-sapinet.sh" >> DEPLOYMENT_SUMMARY.md
+        echo "5. Or deploy to all external machines with ./deploy-all-external.sh" >> DEPLOYMENT_SUMMARY.md
+        echo "6. All machines will auto-update from Git every 15 minutes" >> DEPLOYMENT_SUMMARY.md
+        echo "" >> DEPLOYMENT_SUMMARY.md
+        echo "### External Machines:" >> DEPLOYMENT_SUMMARY.md
+        echo "- rtr-noisy: Hybrid router with GitOps enabled" >> DEPLOYMENT_SUMMARY.md
+        echo "- rtr-sapinet: Spine router with GitOps enabled" >> DEPLOYMENT_SUMMARY.md
+        echo "- Both machines integrate existing configurations with GitOps" >> DEPLOYMENT_SUMMARY.md
+        
+        cat DEPLOYMENT_SUMMARY.md
+
+    - name: Upload deployment summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-summary
+        path: DEPLOYMENT_SUMMARY.md
+
+# Pipeline Features:
+# • Day-0 Bootstrap: Initial machine deployment
+# • Day-2 GitOps: Continuous deployment setup
+# • Comprehensive validation of all configurations
+# • Automatic artifact creation and packaging
+# • Clear deployment instructions and documentation
+# • Scheduled updates for continuous deployment
+
+# GitOps Model:
+# 1. Day-0: CI/CD pipeline deploys initial configuration
+# 2. Day-2: Machine activates GitOps service
+# 3. Ongoing: Machine pulls updates from Git automatically
+# 4. Continuous: CI/CD validates changes before they're pulled
+
+# Success Criteria:
+# ✅ All configurations build successfully
+# ✅ All validations pass
+# ✅ Deployment artifacts are created
+# ✅ GitOps mechanism is configured
+# ✅ Documentation is complete
