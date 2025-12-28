@@ -19,7 +19,172 @@ env:
     trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= cachix.org-1:3JSE1kY+J4t2T9K39c4cHQYWU96t8JX3lN5kXxp+20U=
 
 jobs:
+  # JOB 5: Integration Testing
   # ============================================
+  test-integration:
+    name: Test Module Integration
+    runs-on: ubuntu-latest
+    needs: [test-security, test-network]
+=======
+  # ============================================
+  # JOB 6: Integration Testing
+  # ============================================
+  test-integration:
+    name: Test Module Integration
+    runs-on: ubuntu-latest
+    needs: [test-security, test-network]JOB 4: Network Testing
+  # ============================================
+  test-network:
+    name: Test Network Features
+    runs-on: ubuntu-latest
+    needs: validate-configurations
+=======
+  # ============================================
+  # JOB 5: Network Testing
+  # ============================================
+  test-network:
+    name: Test Network Features
+    runs-on: ubuntu-latest
+    needs: test-external-configsJOB 3: Security Testing
+  # ============================================
+  test-security:
+    name: Test Security Features
+    runs-on: ubuntu-latest
+    needs: validate-configurations
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test security configurations
+      run: |
+        echo "🔒 Testing security configurations..."
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
+        echo "Security tests adapted for minimal flake"
+=======
+  # ============================================
+  # JOB 3: External Configurations Testing
+  # ============================================
+  test-external-configs:
+    name: Test External Configurations
+    runs-on: ubuntu-latest
+    needs: validate-structure
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test external configurations
+      run: |
+        echo "🧪 Testing external configurations..."
+        ./tests/scripts/test-external-configs.sh
+
+  # ============================================
+  # JOB 4: Security Testing
+  # ============================================
+  test-security:
+    name: Test Security Features
+    runs-on: ubuntu-latest
+    needs: test-external-configs
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Test security configurations
+      run: |
+        echo "🔒 Testing security configurations..."
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
+        echo "Security tests adapted for minimal flake"JOB 1: Repository Structure Validation
+  # ============================================
+  validate-structure:
+    name: Validate Repository Structure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Check basic structure
+      run: |
+        echo "📁 Checking basic structure..."
+        test -f modules/core/network-fabric.nix && echo "✅ network-fabric.nix exists"
+        test -f modules/networking/frr.nix && echo "✅ frr.nix exists"
+        test -f modules/networking/wireguard.nix && echo "✅ wireguard.nix exists"
+        test -f modules/security/network-security.nix && echo "✅ network-security.nix exists"
+
+    - name: Validate flake (evaluation only)
+      run: |
+        echo "🧬 flake show"
+        nix flake show
+        echo "🧪 eval toplevel drvPath (no build)"
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.system.build.toplevel.drvPath
+=======
+  # ============================================
+  # JOB 1: Repository Structure Validation
+  # ============================================
+  validate-structure:
+    name: Validate Repository Structure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+      with:
+        extra-conf: ${{ env.NIX_CONFIG }}
+
+    - name: Check basic structure
+      run: |
+        echo "📁 Checking basic structure..."
+        test -f modules/core/network-fabric.nix && echo "✅ network-fabric.nix exists"
+        test -f modules/networking/frr.nix && echo "✅ frr.nix exists"
+        test -f modules/networking/wireguard.nix && echo "✅ wireguard.nix exists"
+        test -f modules/security/network-security.nix && echo "✅ network-security.nix exists"
+
+    - name: Validate flake (evaluation only)
+      run: |
+        echo "🧬 flake show"
+        nix flake show
+        echo "🧪 eval toplevel drvPath (no build)"
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.system.build.toplevel.drvPath
+
+    - name: Validate external configurations
+      run: |
+        echo "🔍 Validating external configurations..."
+        ./scripts/validate-external-configs.sh============================================
   # JOB 1: Repository Structure Validation
   # ============================================
   validate-structure:
@@ -223,6 +388,7 @@ jobs:
 
 # Pipeline Features:
 # • Comprehensive validation of repository structure
+# • External configurations validation
 # • Security module testing
 # • Network module testing (FRR, WireGuard)
 # • Integration testing between modules

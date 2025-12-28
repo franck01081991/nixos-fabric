@@ -70,15 +70,42 @@
    cd nixos-fabric
    ```
 
-2. **Review the example configuration:**
+2. **Initialize submodules:**
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+3. **Validate external configurations:**
+   ```bash
+   ./scripts/validate-external-configs.sh
+   ```
+
+4. **Review the example configuration:**
    ```bash
    less examples/network-security-config.nix
    ```
 
-3. **Deploy to a test system:**
+5. **Deploy to a test system:**
    ```bash
    sudo nixos-rebuild switch --flake .#your-hostname
    ```
+
+### External Configurations Workflow
+
+The project includes a dynamic workflow for managing external machine configurations:
+
+```bash
+# Validate all external configurations
+./scripts/validate-external-configs.sh
+
+# Run comprehensive tests
+./tests/scripts/test-external-configs.sh
+
+# Synchronize validated configs to hosts/
+./scripts/sync-and-validate.sh
+```
+
+See [External Configurations Workflow](docs/setup/external-configs-workflow.md) for detailed documentation.
 
 ## Configuration Examples
 
