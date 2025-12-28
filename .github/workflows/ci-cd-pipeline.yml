@@ -50,7 +50,7 @@ jobs:
         echo "🧬 flake show"
         nix flake show
         echo "🧪 eval toplevel drvPath (no build)"
-        nix eval ./flakes#nixosConfigurations.test-ci.config.system.build.toplevel.drvPath
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.system.build.toplevel.drvPath
 
   # ============================================
   # JOB 2: Configuration Validation
@@ -74,8 +74,8 @@ jobs:
     - name: Validate basic configurations
       run: |
         echo "🔧 Validating basic configurations..."
-        nix eval ./flakes#nixosConfigurations.test.config.networking.hostName
-        nix eval ./flakes#nixosConfigurations.test-ci.config.networking.hostName
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.networking.hostName
 
   # ============================================
   # JOB 3: Security Testing
@@ -99,7 +99,7 @@ jobs:
     - name: Test security configurations
       run: |
         echo "🔒 Testing security configurations..."
-        nix eval ./flakes#nixosConfigurations.test.config.networking.hostName
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
         echo "Security tests adapted for minimal flake"
 
   # ============================================
@@ -124,8 +124,8 @@ jobs:
     - name: Test network configurations
       run: |
         echo "🌐 Testing network configurations..."
-        nix eval ./flakes#nixosConfigurations.test.config.networking.hostName
-        nix eval ./flakes#nixosConfigurations.test-ci.config.boot.isContainer
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.boot.isContainer
         echo "Network tests adapted for minimal flake"
 
   # ============================================
@@ -150,8 +150,8 @@ jobs:
     - name: Test configuration integration
       run: |
         echo "🧪 Testing configuration integration..."
-        nix eval ./flakes#nixosConfigurations.test.config.networking.hostName
-        nix eval ./flakes#nixosConfigurations.test-ci.config.boot.isContainer
+        nix eval ./flakes/flake.nix#nixosConfigurations.test.config.networking.hostName
+        nix eval ./flakes/flake.nix#nixosConfigurations.test-ci.config.boot.isContainer
         echo "Integration tests adapted for minimal flake"
 
   # ============================================
@@ -176,7 +176,7 @@ jobs:
     - name: Build configurations
       run: |
         echo "🏗️ Building configurations..."
-        nix build ./flakes#nixosConfigurations.test-ci.config.system.build.toplevel --no-link
+        nix build ./flakes/flake.nix#nixosConfigurations.test-ci.config.system.build.toplevel --no-link
         echo "✅ All builds completed successfully"
 
   # ============================================

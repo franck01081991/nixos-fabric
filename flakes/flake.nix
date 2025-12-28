@@ -69,7 +69,7 @@
               network-fabric.network.hostName = hostname;
               # network-fabric.network.dnsServers = [ "10.0.0.53" "fd00::53" ];
             })
-          ] ++ (if ciMode then [ ./modules/ci-bootless.nix ] else []);
+          ] ++ (if ciMode then [ ../modules/ci-bootless.nix ] else []);
         };
 
       # Minimal router configurations for CI compatibility
